@@ -15,9 +15,12 @@
 ## 开发
 
 ```sh
-pnpm --filter @tau/plugin-weread test
-pnpm --filter @tau/plugin-weread build        # dist/weread-<版本>.zip
-pnpm --filter @tau/plugin-weread install:local # 解压到 ~/.editor/plugins/weread，目标已存在时拒绝
+pnpm install --frozen-lockfile
+pnpm test
+pnpm build        # dist/weread-<版本>.zip
+pnpm install:local # 解压到 ~/.editor/plugins/weread，目标已存在时拒绝
 ```
 
-需要 Tau 0.59.0 及以上（摘录提供方 API）。也可在设置 → 插件 →「安装或更新 ZIP」选择构建产物。
+使用 Node.js 24、pnpm 11.9.0。依赖公开 npm SDK 0.8.0，语义工具类从 @tau/plugins/tailwind.css 编译，不需要主项目源码。需要 Tau 0.59.0 及以上，在插件管理中选择「安装或更新 ZIP」。
+
+源码仓库：https://github.com/LastKnightCoder/tau-plugin-weread 。发布时同时更新 package.json、manifest.json、CHANGELOG.md，再提交、创建版本标签并上传 ZIP 至 GitHub Release。

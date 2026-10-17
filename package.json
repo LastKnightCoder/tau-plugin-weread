@@ -1,6 +1,6 @@
 {
-  "name": "@tau/plugin-weread",
-  "version": "1.0.3",
+  "name": "tau-plugin-weread",
+  "version": "1.0.4",
   "private": true,
   "type": "module",
   "description": "微信读书插件：书架、划线与想法同步为 Tau 摘录",
@@ -12,9 +12,8 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.0",
-    "@tau/plugins": "workspace:*",
-    "@tau/themes": "workspace:*",
-    "@tau/ui": "workspace:*",
+    "@tau/plugins": "npm:@xiongtao.xt/tau-plugins@0.8.0",
+    "@tau/ui": "npm:@xiongtao.xt/tau-ui@0.1.1",
     "dayjs": "^1.11.13",
     "lucide-react": "^0.399.0",
     "react": "19.2.0",
@@ -30,5 +29,14 @@
     "tailwindcss": "4.1.18",
     "typescript": "^5.0.4",
     "vitest": "^3.2.4"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LastKnightCoder/tau-plugin-weread.git"
   }
 }
