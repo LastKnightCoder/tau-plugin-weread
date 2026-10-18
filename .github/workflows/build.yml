@@ -1,5 +1,9 @@
 name: 检查与构建
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
 permissions:
   contents: read
 jobs:

@@ -1,5 +1,18 @@
 # 微信读书插件开发与维护
 
+## 自动发布
+
+本仓库的.github/workflows/release.yml与公开模板一致。同步更新package.json和manifest.json版本并提交后，推送对应版本tag即可自动安装依赖、运行测试（若定义）、构建并将ZIP上传到GitHub Release，无需手动上传或配置额外Token。
+
+```sh
+version=$(node -p "require('./manifest.json').version")
+git tag "v$version"
+git push origin HEAD
+git push origin "v$version"
+```
+
+tag也可不带v前缀，版本必须与两个文件一致；预发布版本自动标记为Pre-release。Actions失败可重跑，已有Release会更新同名ZIP。已发布版本不要移动tag，代码修复应提高版本再发布。仓库需启用Actions并允许contents:write。Git远程统一使用SSH；该流程不自动提交插件中心审核或更新客户端固定产物。
+
 插件 ID `weread`。连接微信读书官方 API Key，读取书架，查看划线与想法，并把它们同步为 Tau 摘录（可搜索、引用、转卡片 / 问题）。只依赖公开 SDK（`@tau/plugins`、`@tau/ui`），构建脚本拒绝打包仓库内部源码。
 
 ## 数据
@@ -23,4 +36,4 @@ pnpm install:local # 解压到 ~/.editor/plugins/weread，目标已存在时拒�
 
 使用 Node.js 24、pnpm 11.9.0。依赖公开 npm SDK 0.8.0，语义工具类从 @tau/plugins/tailwind.css 编译，不需要主项目源码。需要 Tau 0.59.0 及以上，在插件管理中选择「安装或更新 ZIP」。
 
-源码仓库：https://github.com/LastKnightCoder/tau-plugin-weread 。发布时同时更新 package.json、manifest.json、CHANGELOG.md，再提交、创建版本标签并上传 ZIP 至 GitHub Release。
+源码仓库：https://github.com/LastKnightCoder/tau-plugin-weread 。发布时同时更新 package.json、manifest.json、CHANGELOG.md，再提交并推送版本标签，由上述工作流生成 Release 和 ZIP。
