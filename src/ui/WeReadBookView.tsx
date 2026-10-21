@@ -106,13 +106,15 @@ export function WeReadBookView({ bookId, bookmark }: { bookId: string; bookmark?
 
   if (!detail || !book || !notes) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-        <p className="text-ink-1 text-[15px] font-semibold">书架上找不到这本书</p>
-        <p className="text-tau-meta text-ink-2">可能已从微信读书书架移除，或属于另一个工作区。</p>
+      <div className="wr:flex wr:h-full wr:flex-col wr:items-center wr:justify-center wr:gap-2 wr:text-center">
+        <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">书架上找不到这本书</p>
+        <p className="wr:text-tau-meta wr:text-ink-2">
+          可能已从微信读书书架移除，或属于另一个工作区。
+        </p>
         <Button
           variant="secondary"
           size="sm"
-          className="mt-2"
+          className="wr:mt-2"
           onClick={() => void pages.shelf.open()}
         >
           回到书架
@@ -129,23 +131,23 @@ export function WeReadBookView({ bookId, bookmark }: { bookId: string; bookmark?
       : null;
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-[1720px] flex-col px-4 pb-4 pt-1">
-      <div className="bg-surface shadow-card rounded-tau-lg flex min-h-0 flex-1 overflow-hidden">
+    <div className="wr:mx-auto wr:flex wr:h-full wr:min-h-0 wr:w-full wr:max-w-[1720px] wr:flex-col wr:px-4 wr:pb-4 wr:pt-1">
+      <div className="wr:bg-surface wr:shadow-card wr:rounded-tau-lg wr:flex wr:min-h-0 wr:flex-1 wr:overflow-hidden">
         {/* 外层只管收起动画的宽度，滚动交给 FadeScroll（其右侧透明边收起时也不占位） */}
         <div
           className={cn(
-            "ease-tau-out flex shrink-0 overflow-hidden transition-[width,opacity] duration-[240ms]",
-            showToc ? "w-[232px] opacity-100" : "w-0 opacity-0"
+            "wr:ease-tau-out wr:flex wr:shrink-0 wr:overflow-hidden wr:transition-[width,opacity] wr:duration-[240ms]",
+            showToc ? "wr:w-[232px] wr:opacity-100" : "wr:w-0 wr:opacity-0"
           )}
         >
-          <FadeScroll className="my-4 w-[232px] shrink-0 py-1 pl-3.5 pr-1">
+          <FadeScroll className="wr:my-4 wr:w-[232px] wr:shrink-0 wr:py-1 wr:pl-3.5 wr:pr-1">
             {chapters.length > 1 && (
               <NoteToc chapters={chapters} active={activeKey} onJump={jump} />
             )}
           </FadeScroll>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex flex-none items-center gap-1 px-3 pt-3">
+        <div className="wr:flex wr:min-w-0 wr:flex-1 wr:flex-col">
+          <div className="wr:flex wr:flex-none wr:items-center wr:gap-1 wr:px-3 wr:pt-3">
             <Tooltip content={tocOpen ? "收起目录" : "展开目录"} placement="bottom">
               <IconButton
                 onClick={toggleToc}
@@ -165,8 +167,8 @@ export function WeReadBookView({ bookId, bookmark }: { bookId: string; bookmark?
               书架
             </Button>
           </div>
-          <FadeScroll scrollRef={setScrollEl} className="mb-4 min-h-0 min-w-0 flex-1">
-            <div className="mx-auto max-w-[720px] px-9 pb-12 pt-1">
+          <FadeScroll scrollRef={setScrollEl} className="wr:mb-4 wr:min-h-0 wr:min-w-0 wr:flex-1">
+            <div className="wr:mx-auto wr:max-w-[720px] wr:px-9 wr:pb-12 wr:pt-1">
               <BookHeader
                 book={book}
                 counts={counts}
@@ -183,16 +185,16 @@ export function WeReadBookView({ bookId, bookmark }: { bookId: string; bookmark?
                           .then(() => toast.success("已复制为 Markdown"))
                 }
               />
-              {status && <p className="text-tau-sm text-warn mt-3">{status}</p>}
+              {status && <p className="wr:text-tau-sm wr:text-warn wr:mt-3">{status}</p>}
               <BookReviews reviews={notes.bookReviews} />
               {empty ? (
-                <div className="flex flex-col items-center gap-2 py-20 text-center">
-                  <Highlighter className="text-ink-3 size-7" strokeWidth={1.5} />
-                  <p className="text-ink-1 text-[15px] font-semibold">
+                <div className="wr:flex wr:flex-col wr:items-center wr:gap-2 wr:py-20 wr:text-center">
+                  <Highlighter className="wr:text-ink-3 wr:size-7" strokeWidth={1.5} />
+                  <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">
                     {refreshing ? "正在拉取笔记…" : "这本书还没有划线"}
                   </p>
                   {!refreshing && (
-                    <p className="text-tau-meta text-ink-2 max-w-[36ch]">
+                    <p className="wr:text-tau-meta wr:text-ink-2 wr:max-w-[36ch]">
                       在微信读书里划线或写想法后，回到这里点「重新拉取笔记」。
                     </p>
                   )}

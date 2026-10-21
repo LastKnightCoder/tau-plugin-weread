@@ -1,5 +1,5 @@
-/* 插件自带的 Tailwind 工具类：只编译本插件用到的类，不含 preflight；颜色与尺度取宿主注入的 --tau-* token */
-@import "tailwindcss/theme.css" layer(theme);
+/* 插件自带的 Tailwind 工具类：只编译本插件用到的类，不含 preflight；类名统一加 wr: 前缀，不覆盖 Tau 或博客模板的同名类；颜色与尺度取宿主注入的 --tau-* token */
+@import "tailwindcss/theme.css" layer(theme) prefix(wr);
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
 @import "@tau/plugins/tailwind.css";
 @source "./";

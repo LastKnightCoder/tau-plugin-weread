@@ -36,4 +36,6 @@ pnpm install:local # 解压到 ~/.editor/plugins/weread，目标已存在时拒�
 
 使用 Node.js 24、pnpm 11.9.0。依赖公开 npm SDK 0.8.0，语义工具类从 @tau/plugins/tailwind.css 编译，不需要主项目源码。需要 Tau 0.59.0 及以上，在插件管理中选择「安装或更新 ZIP」。
 
+类名一律带 `wr:` 前缀（如 `wr:flex wr:md:hidden`）：插件样式和 Tau 的样式在同一页面里，不带前缀的工具类会排在宿主的响应式写法之后把它们覆盖掉。开启前缀后，不带前缀的类不会生成样式；构建产物里出现不带前缀的类选择器会直接报错。
+
 源码仓库：https://github.com/LastKnightCoder/tau-plugin-weread 。发布时同时更新 package.json、manifest.json、CHANGELOG.md，再提交并推送版本标签，由上述工作流生成 Release 和 ZIP。

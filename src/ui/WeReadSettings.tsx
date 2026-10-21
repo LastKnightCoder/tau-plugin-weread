@@ -33,24 +33,26 @@ export function WeReadSettings() {
   };
 
   return (
-    <Panel className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <span className="text-tau-body text-ink-1 font-medium">连接状态</span>
+    <Panel className="wr:flex wr:flex-col wr:gap-3">
+      <div className="wr:flex wr:items-center wr:gap-2">
+        <span className="wr:text-tau-body wr:text-ink-1 wr:font-medium">连接状态</span>
         <span
           className={
             connection === "valid"
-              ? "text-ok text-tau-meta"
+              ? "wr:text-ok wr:text-tau-meta"
               : connection === "invalid"
-                ? "text-danger text-tau-meta"
-                : "text-ink-2 text-tau-meta"
+                ? "wr:text-danger wr:text-tau-meta"
+                : "wr:text-ink-2 wr:text-tau-meta"
           }
         >
           {STATUS_TEXT[connection]}
         </span>
       </div>
-      {connection === "invalid" && reason && <p className="text-tau-sm text-danger">{reason}</p>}
+      {connection === "invalid" && reason && (
+        <p className="wr:text-tau-sm wr:text-danger">{reason}</p>
+      )}
       <form
-        className="flex gap-2"
+        className="wr:flex wr:gap-2"
         onSubmit={event => {
           event.preventDefault();
           const value = draft.trim();
@@ -77,7 +79,7 @@ export function WeReadSettings() {
           保存并校验
         </Button>
       </form>
-      <div className="flex flex-wrap gap-1">
+      <div className="wr:flex wr:flex-wrap wr:gap-1">
         <Button
           variant="ghost"
           size="sm"
@@ -112,7 +114,7 @@ export function WeReadSettings() {
           </>
         )}
       </div>
-      <p className="text-tau-sm text-ink-3">
+      <p className="wr:text-tau-sm wr:text-ink-3">
         API Key 只保存在当前工作区。断开后书架缓存和已同步到 Tau 的划线保留。
       </p>
     </Panel>

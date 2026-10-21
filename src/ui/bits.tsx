@@ -6,11 +6,11 @@ import { STATUS_LABEL, coverTone, type ReadingStatus, type WeReadBook } from "..
 import { SERIF } from "./styles";
 
 const TONE_BG = {
-  1: "bg-tag-1-soft text-tag-1",
-  2: "bg-tag-2-soft text-tag-2",
-  3: "bg-tag-3-soft text-tag-3",
-  4: "bg-tag-4-soft text-tag-4",
-  5: "bg-tag-5-soft text-tag-5",
+  1: "wr:bg-tag-1-soft wr:text-tag-1",
+  2: "wr:bg-tag-2-soft wr:text-tag-2",
+  3: "wr:bg-tag-3-soft wr:text-tag-3",
+  4: "wr:bg-tag-4-soft wr:text-tag-4",
+  5: "wr:bg-tag-5-soft wr:text-tag-5",
 } as const;
 
 /**
@@ -37,7 +37,7 @@ export function BookCover({
   return (
     <div
       className={cn(
-        "shadow-lift relative aspect-[3/4.3] shrink-0 overflow-hidden rounded-[3px_6px_6px_3px]",
+        "wr:shadow-lift wr:relative wr:aspect-[3/4.3] wr:shrink-0 wr:overflow-hidden wr:rounded-[3px_6px_6px_3px]",
         !showImage && TONE_BG[coverTone(book.id)],
         className
       )}
@@ -50,14 +50,22 @@ export function BookCover({
           draggable={false}
           referrerPolicy="no-referrer"
           onError={() => setFailed(true)}
-          className="size-full object-cover"
+          className="wr:size-full wr:object-cover"
         />
       ) : bare ? null : (
-        <div className="flex size-full flex-col px-[12%] pb-[10%] pt-[14%]">
-          <span className={cn(SERIF, "line-clamp-4 font-semibold leading-[1.35]", titleClassName)}>
+        <div className="wr:flex wr:size-full wr:flex-col wr:px-[12%] wr:pb-[10%] wr:pt-[14%]">
+          <span
+            className={cn(
+              SERIF,
+              "wr:line-clamp-4 wr:font-semibold wr:leading-[1.35]",
+              titleClassName
+            )}
+          >
             {book.title}
           </span>
-          <span className="mt-auto line-clamp-1 text-[0.7em] opacity-80">{book.author}</span>
+          <span className="wr:mt-auto wr:line-clamp-1 wr:text-[0.7em] wr:opacity-80">
+            {book.author}
+          </span>
         </div>
       )}
       {children}
@@ -67,9 +75,12 @@ export function BookCover({
 
 export function ProgressBar({ book, className }: { book: WeReadBook; className?: string }) {
   return (
-    <div className={cn("bg-line-1 h-[3px] overflow-hidden rounded-full", className)}>
+    <div className={cn("wr:bg-line-1 wr:h-[3px] wr:overflow-hidden wr:rounded-full", className)}>
       <div
-        className={cn("h-full rounded-full", book.status === "finished" ? "bg-ok" : "bg-accent")}
+        className={cn(
+          "wr:h-full wr:rounded-full",
+          book.status === "finished" ? "wr:bg-ok" : "wr:bg-accent"
+        )}
         style={{ width: `${book.progress}%` }}
       />
     </div>
@@ -77,15 +88,15 @@ export function ProgressBar({ book, className }: { book: WeReadBook; className?:
 }
 
 const STATUS_DOT: Record<ReadingStatus, string> = {
-  reading: "bg-accent",
-  finished: "bg-ok",
-  unread: "bg-ink-3",
+  reading: "wr:bg-accent",
+  finished: "wr:bg-ok",
+  unread: "wr:bg-ink-3",
 };
 
 export function StatusDot({ status }: { status: ReadingStatus }) {
   return (
-    <span className="text-tau-sm text-ink-2 inline-flex items-center gap-1.5 whitespace-nowrap">
-      <span className={cn("size-1.5 rounded-full", STATUS_DOT[status])} />
+    <span className="wr:text-tau-sm wr:text-ink-2 wr:inline-flex wr:items-center wr:gap-1.5 wr:whitespace-nowrap">
+      <span className={cn("wr:size-1.5 wr:rounded-full", STATUS_DOT[status])} />
       {STATUS_LABEL[status]}
     </span>
   );

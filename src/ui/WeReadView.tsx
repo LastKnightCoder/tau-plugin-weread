@@ -114,18 +114,18 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
         variant="secondary"
         size="sm"
         icon={KeyRound}
-        className="shrink-0"
+        className="wr:shrink-0"
         onClick={toSettings}
       >
         连接微信读书
       </Button>
     ) : (
-      <span className="flex shrink-0 items-center">
+      <span className="wr:flex wr:shrink-0 wr:items-center">
         <Button
           variant="secondary"
           size="sm"
           icon={RefreshCw}
-          className="rounded-r-none tabular-nums"
+          className="wr:rounded-r-none wr:tabular-nums"
           loading={syncing}
           loadingText={
             progress?.total ? `同步中 ${progress.completed}/${progress.total}` : "同步中…"
@@ -144,44 +144,48 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
               size="sm"
               aria-label="更多同步选项"
               disabled={connection !== "valid" || syncing}
-              className="-ml-px rounded-l-none px-1.5"
+              className="wr:-ml-px wr:rounded-l-none wr:px-1.5"
             >
-              <ChevronDown className="size-3.5" strokeWidth={1.75} />
+              <ChevronDown className="wr:size-3.5" strokeWidth={1.75} />
             </Button>
           }
         >
           <Menu.Item
-            icon={<RefreshCw className="size-[15px]" strokeWidth={1.75} />}
+            icon={<RefreshCw className="wr:size-[15px]" strokeWidth={1.75} />}
             onSelect={() => sync(true)}
           >
             全量重新同步
-            <span className="text-ink-3 ml-1.5 tabular-nums">约 {books.length * 2} 个请求</span>
+            <span className="wr:text-ink-3 wr:ml-1.5 wr:tabular-nums">
+              约 {books.length * 2} 个请求
+            </span>
           </Menu.Item>
         </Menu>
       </span>
     );
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-[1720px] flex-col px-4 pb-4 pt-1">
+    <div className="wr:mx-auto wr:flex wr:h-full wr:min-h-0 wr:w-full wr:max-w-[1720px] wr:flex-col wr:px-4 wr:pb-4 wr:pt-1">
       {/* 一整张纸：页头与筛选行固定在纸顶，书目在纸内滚动 */}
-      <div className="bg-surface shadow-card rounded-tau-lg flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="flex flex-none flex-col px-8 pt-5">
-          <div className="flex h-10 flex-none items-center gap-3">
-            <h1 className="text-tau-title-lg shrink-0 font-semibold tracking-[-0.01em]">
+      <div className="wr:bg-surface wr:shadow-card wr:rounded-tau-lg wr:flex wr:min-h-0 wr:flex-1 wr:flex-col wr:overflow-hidden">
+        <div className="wr:flex wr:flex-none wr:flex-col wr:px-8 wr:pt-5">
+          <div className="wr:flex wr:h-10 wr:flex-none wr:items-center wr:gap-3">
+            <h1 className="wr:text-tau-title-lg wr:shrink-0 wr:font-semibold wr:tracking-[-0.01em]">
               微信读书
             </h1>
-            <span className="text-tau-meta text-ink-2 w-0 flex-1 truncate whitespace-nowrap tabular-nums">
+            <span className="wr:text-tau-meta wr:text-ink-2 wr:w-0 wr:flex-1 wr:truncate wr:whitespace-nowrap wr:tabular-nums">
               {books.length > 0 && (
                 <>
-                  <b className="text-ink-1 font-semibold">{books.length}</b> 本书
+                  <b className="wr:text-ink-1 wr:font-semibold">{books.length}</b> 本书
                   {totalMinutes > 0 && (
                     <>
-                      <span className="text-ink-3 mx-1.5">·</span>累计阅读{" "}
-                      <b className="text-ink-1 font-semibold">{formatMinutes(totalMinutes)}</b>
+                      <span className="wr:text-ink-3 wr:mx-1.5">·</span>累计阅读{" "}
+                      <b className="wr:text-ink-1 wr:font-semibold">
+                        {formatMinutes(totalMinutes)}
+                      </b>
                     </>
                   )}
-                  <span className="text-ink-3 mx-1.5">·</span>
-                  <span className="text-ink-3">{formatSyncedAt(lastSyncedAt)}</span>
+                  <span className="wr:text-ink-3 wr:mx-1.5">·</span>
+                  <span className="wr:text-ink-3">{formatSyncedAt(lastSyncedAt)}</span>
                 </>
               )}
             </span>
@@ -199,17 +203,17 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                   }
                 }}
                 placeholder="搜索书名或作者"
-                className="w-0"
-                wrapperClassName="w-auto max-w-[240px] flex-[0_1_240px]"
+                className="wr:w-0"
+                wrapperClassName="wr:w-auto wr:max-w-[240px] wr:flex-[0_1_240px]"
               />
             )}
             {(books.length > 0 || connection !== "none") && syncButton}
           </div>
 
           {books.length > 0 && (connection === "invalid" || connection === "none") && (
-            <div className="bg-warn-soft text-tau-meta mt-2 flex flex-none items-center gap-2.5 rounded-[12px] px-3 py-2">
-              <KeyRound className="text-warn size-4 shrink-0" strokeWidth={1.75} />
-              <span className="min-w-0 flex-1">
+            <div className="wr:bg-warn-soft wr:text-tau-meta wr:mt-2 wr:flex wr:flex-none wr:items-center wr:gap-2.5 wr:rounded-[12px] wr:px-3 wr:py-2">
+              <KeyRound className="wr:text-warn wr:size-4 wr:shrink-0" strokeWidth={1.75} />
+              <span className="wr:min-w-0 wr:flex-1">
                 {connection === "invalid"
                   ? "API Key 已失效，当前显示的是上次同步的本地缓存，不能拉取新笔记。"
                   : "尚未连接微信读书，当前显示的是本地缓存。"}
@@ -217,7 +221,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
               <button
                 type="button"
                 onClick={toSettings}
-                className="text-accent-text shrink-0 font-medium hover:underline"
+                className="wr:text-accent-text wr:shrink-0 wr:font-medium wr:hover:underline"
               >
                 {connection === "invalid" ? "重新填写" : "去连接"}
               </button>
@@ -225,9 +229,9 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
           )}
 
           {books.length > 0 && (
-            <div className="mt-2 flex h-10 flex-none items-center gap-1.5">
+            <div className="wr:mt-2 wr:flex wr:h-10 wr:flex-none wr:items-center wr:gap-1.5">
               {/* w-0 + flex-1：分类再多也只在自身范围内横向滚动，不撑宽页面 */}
-              <div className="flex w-0 flex-1 items-center gap-1.5 overflow-x-auto py-1 pr-6 [mask-image:linear-gradient(90deg,#000_calc(100%-28px),transparent)]">
+              <div className="wr:flex wr:w-0 wr:flex-1 wr:items-center wr:gap-1.5 wr:overflow-x-auto wr:py-1 wr:pr-6 wr:[mask-image:linear-gradient(90deg,#000_calc(100%-28px),transparent)]">
                 <FilterPill
                   active={!activeArchive}
                   onClick={() => setArchive("")}
@@ -251,10 +255,10 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                     variant="ghost"
                     size="sm"
                     icon={ListFilter}
-                    className={cn("shrink-0", status !== "all" && "text-accent-text")}
+                    className={cn("wr:shrink-0", status !== "all" && "wr:text-accent-text")}
                   >
                     {statusLabel}
-                    <ChevronDown className="text-ink-3 size-3.5" strokeWidth={1.75} />
+                    <ChevronDown className="wr:text-ink-3 wr:size-3.5" strokeWidth={1.75} />
                   </Button>
                 }
               >
@@ -272,9 +276,9 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
               <Menu
                 align="end"
                 trigger={
-                  <Button variant="ghost" size="sm" icon={ArrowDownUp} className="shrink-0">
+                  <Button variant="ghost" size="sm" icon={ArrowDownUp} className="wr:shrink-0">
                     {sortLabel}
-                    <ChevronDown className="text-ink-3 size-3.5" strokeWidth={1.75} />
+                    <ChevronDown className="wr:text-ink-3 wr:size-3.5" strokeWidth={1.75} />
                   </Button>
                 }
               >
@@ -293,10 +297,10 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                     variant="ghost"
                     size="sm"
                     icon={layout === "list" ? List : LayoutGrid}
-                    className="shrink-0"
+                    className="wr:shrink-0"
                   >
                     {LAYOUTS.find(l => l.value === layout)?.label}
-                    <ChevronDown className="text-ink-3 size-3.5" strokeWidth={1.75} />
+                    <ChevronDown className="wr:text-ink-3 wr:size-3.5" strokeWidth={1.75} />
                   </Button>
                 }
               >
@@ -315,7 +319,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
           )}
         </div>
 
-        <FadeScroll className="mb-4 min-h-0 flex-1 pb-4 pl-8 pr-[26px] pt-3">
+        <FadeScroll className="wr:mb-4 wr:min-h-0 wr:flex-1 wr:pb-4 wr:pl-8 wr:pr-[26px] wr:pt-3">
           {books.length === 0 ? (
             <EmptyShelf
               connection={connection}
@@ -328,9 +332,9 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
           ) : (
             <>
               {!filtering && reading.length > 0 && (
-                <section className="mb-6">
+                <section className="wr:mb-6">
                   <SectionTitle title="在读" hint="最近读过的书" />
-                  <div className="-mx-3.5 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-1">
+                  <div className="wr:-mx-3.5 wr:grid wr:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] wr:gap-1">
                     {reading.map(book => (
                       <ReadingCard key={book.id} book={book} onOpen={() => open(book)} />
                     ))}
@@ -343,13 +347,13 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                   hint={`${visible.length} 本 · 按${sortLabel}`}
                 />
                 {visible.length === 0 ? (
-                  <div className="flex flex-col items-center gap-2 py-16 text-center">
-                    <SearchX className="text-ink-3 size-6" strokeWidth={1.5} />
-                    <p className="text-tau-meta text-ink-2">没有符合条件的书</p>
+                  <div className="wr:flex wr:flex-col wr:items-center wr:gap-2 wr:py-16 wr:text-center">
+                    <SearchX className="wr:text-ink-3 wr:size-6" strokeWidth={1.5} />
+                    <p className="wr:text-tau-meta wr:text-ink-2">没有符合条件的书</p>
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="mt-1"
+                      className="wr:mt-1"
                       onClick={() => {
                         setQuery("");
                         setStatus("all");
@@ -361,7 +365,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                 ) : layout === "list" ? (
                   <ShelfList books={visible} sort={sort} onSort={setSort} onOpen={open} />
                 ) : (
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(118px,1fr))] gap-x-[22px] gap-y-6">
+                  <div className="wr:grid wr:grid-cols-[repeat(auto-fill,minmax(118px,1fr))] wr:gap-x-[22px] wr:gap-y-6">
                     {visible.map(book => (
                       <CoverTile key={book.id} book={book} onOpen={() => open(book)} />
                     ))}
@@ -378,9 +382,13 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
 
 function SectionTitle({ title, hint }: { title: string; hint?: string }) {
   return (
-    <h2 className="mb-3 flex items-baseline gap-2 px-0.5 text-[13.5px] font-semibold">
+    <h2 className="wr:mb-3 wr:flex wr:items-baseline wr:gap-2 wr:px-0.5 wr:text-[13.5px] wr:font-semibold">
       {title}
-      {hint && <small className="text-tau-sm text-ink-3 font-normal tabular-nums">{hint}</small>}
+      {hint && (
+        <small className="wr:text-tau-sm wr:text-ink-3 wr:font-normal wr:tabular-nums">
+          {hint}
+        </small>
+      )}
     </h2>
   );
 }
@@ -414,17 +422,17 @@ function EmptyShelf({
   if (connection === "checking") return <Loading label="正在校验 API Key…" />;
   const invalid = connection === "invalid";
   return (
-    <div className="flex flex-col items-center gap-2 px-5 py-20 text-center">
-      <span className="bg-accent-soft text-accent-text mb-1.5 grid size-[52px] place-items-center rounded-[16px]">
-        <BookOpen className="size-6" strokeWidth={1.5} />
+    <div className="wr:flex wr:flex-col wr:items-center wr:gap-2 wr:px-5 wr:py-20 wr:text-center">
+      <span className="wr:bg-accent-soft wr:text-accent-text wr:mb-1.5 wr:grid wr:size-[52px] wr:place-items-center wr:rounded-[16px]">
+        <BookOpen className="wr:size-6" strokeWidth={1.5} />
       </span>
-      <p className="text-ink-1 text-[15px] font-semibold">
+      <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">
         {invalid ? "API Key 已失效" : "书架还是空的"}
       </p>
-      <p className="text-tau-meta text-ink-2 max-w-[36ch]">
+      <p className="wr:text-tau-meta wr:text-ink-2 wr:max-w-[36ch]">
         {invalid ? "重新填写 API Key 后即可同步书架。" : "同步一次，把微信读书书架上的书带进来。"}
       </p>
-      <div className="mt-2.5">
+      <div className="wr:mt-2.5">
         {invalid ? (
           <Button variant="soft" size="sm" icon={KeyRound} onClick={onSettings}>
             重新填写

@@ -63,7 +63,7 @@ export function openExternal(url: string) {
 }
 
 /** 定位到某个元素后短暂描边提示；类名写成静态串，Tailwind 才能生成 */
-const FLASH_CLASSES = ["ring-2", "ring-accent", "ring-offset-2", "ring-offset-surface"];
+const FLASH_CLASSES = ["wr:ring-2", "wr:ring-accent", "wr:ring-offset-2", "wr:ring-offset-surface"];
 
 export function scrollToAndFlash(el: Element, durationMs = 1600): void {
   el.scrollIntoView({ behavior: "smooth", block: "center" });

@@ -33,7 +33,18 @@ const tailwind = {
         onDependency: () => undefined,
       });
       const scanner = new Scanner({ sources: compiler.sources });
-      return { contents: compiler.build(scanner.scan()), loader: "css" };
+      const utilities = compiler.build(scanner.scan());
+      // 不带前缀的工具类会覆盖 Tau 与博客模板的同名类（如模板的 md:flex 被 .hidden 盖掉）
+      const bare = [
+        ...utilities
+          .replace(/\/\*[\s\S]*?\*\//g, "")
+          .matchAll(/\.((?:\\.|[A-Za-z_-])(?:\\.|[\w-])*)/g),
+      ]
+        .map(match => match[1].replace(/\\(.)/g, "$1"))
+        .filter(name => !name.startsWith("wr:"));
+      if (bare.length)
+        throw new Error(`Tailwind 类名需要 wr: 前缀：${[...new Set(bare)].join(" ")}`);
+      return { contents: utilities, loader: "css" };
     });
   },
 };

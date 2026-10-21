@@ -46,38 +46,44 @@ export function BookHeader({
   onCopyMarkdown?: () => void;
 }) {
   return (
-    <header className="flex items-start gap-5">
-      <BookCover book={book} className="w-[88px]" titleClassName="text-[12px]" />
-      <div className="min-w-0 flex-1">
-        <h1 className={cn(SERIF, "text-[24px] font-semibold leading-[1.3] tracking-[0.02em]")}>
+    <header className="wr:flex wr:items-start wr:gap-5">
+      <BookCover book={book} className="wr:w-[88px]" titleClassName="wr:text-[12px]" />
+      <div className="wr:min-w-0 wr:flex-1">
+        <h1
+          className={cn(
+            SERIF,
+            "wr:text-[24px] wr:font-semibold wr:leading-[1.3] wr:tracking-[0.02em]"
+          )}
+        >
           {book.title}
         </h1>
-        <p className="text-tau-body text-ink-2 mt-0.5">
+        <p className="wr:text-tau-body wr:text-ink-2 wr:mt-0.5">
           {[book.author, book.publisher].filter(Boolean).join(" · ")}
         </p>
-        <div className="text-tau-micro text-ink-3 mt-2.5 flex max-w-[320px] items-center gap-2 tabular-nums">
-          <ProgressBar book={book} className="flex-1" />
+        <div className="wr:text-tau-micro wr:text-ink-3 wr:mt-2.5 wr:flex wr:max-w-[320px] wr:items-center wr:gap-2 wr:tabular-nums">
+          <ProgressBar book={book} className="wr:flex-1" />
           {book.status === "finished" ? "读完" : `${book.progress}%`}
         </div>
-        <p className="text-tau-sm text-ink-3 mt-2 flex flex-wrap gap-x-3.5 gap-y-1 tabular-nums">
+        <p className="wr:text-tau-sm wr:text-ink-3 wr:mt-2 wr:flex wr:flex-wrap wr:gap-x-3.5 wr:gap-y-1 wr:tabular-nums">
           {book.minutes > 0 && (
             <span>
-              阅读 <b className="text-ink-1 font-medium">{formatMinutes(book.minutes)}</b>
+              阅读 <b className="wr:text-ink-1 wr:font-medium">{formatMinutes(book.minutes)}</b>
             </span>
           )}
           <span>
-            划线 <b className="text-ink-1 font-medium">{counts.highlights}</b>
+            划线 <b className="wr:text-ink-1 wr:font-medium">{counts.highlights}</b>
           </span>
           <span>
-            想法 <b className="text-ink-1 font-medium">{counts.reviews}</b>
+            想法 <b className="wr:text-ink-1 wr:font-medium">{counts.reviews}</b>
           </span>
           {book.lastRead && (
             <span>
-              最近阅读 <b className="text-ink-1 font-medium">{formatReadDay(book.lastRead)}</b>
+              最近阅读{" "}
+              <b className="wr:text-ink-1 wr:font-medium">{formatReadDay(book.lastRead)}</b>
             </span>
           )}
         </p>
-        <div className="-ml-2 mt-3 flex flex-wrap gap-1">
+        <div className="wr:-ml-2 wr:mt-3 wr:flex wr:flex-wrap wr:gap-1">
           {onOpenWeb && (
             <Button variant="ghost" size="sm" icon={BookOpen} onClick={onOpenWeb}>
               在微信读书中打开
@@ -109,15 +115,15 @@ export function BookHeader({
 export function BookReviews({ reviews }: { reviews: { id: string; paragraphs: string[] }[] }) {
   if (!reviews.length) return null;
   return (
-    <div className="bg-accent-soft mt-5 flex flex-col gap-3 rounded-[var(--tau-radius-md)] px-4 py-3.5">
+    <div className="wr:bg-accent-soft wr:mt-5 wr:flex wr:flex-col wr:gap-3 wr:rounded-[var(--tau-radius-md)] wr:px-4 wr:py-3.5">
       {reviews.map(review => (
         <div key={review.id}>
-          <p className="text-tau-sm text-accent-text mb-1 flex items-center gap-1.5 font-medium">
-            <PenLine className="size-3.5" strokeWidth={1.75} />
+          <p className="wr:text-tau-sm wr:text-accent-text wr:mb-1 wr:flex wr:items-center wr:gap-1.5 wr:font-medium">
+            <PenLine className="wr:size-3.5" strokeWidth={1.75} />
             我的书评
           </p>
           {review.paragraphs.map((p, i) => (
-            <p key={i} className="text-tau-body-lg leading-[1.85]">
+            <p key={i} className="wr:text-tau-body-lg wr:leading-[1.85]">
               {p}
             </p>
           ))}
@@ -138,14 +144,14 @@ export function NoteFilterBar({
   onChange(filter: NoteFilter): void;
 }) {
   return (
-    <div className="bg-surface sticky top-0 z-[2] -mx-1 mt-5 flex items-center gap-1.5 px-1 py-2.5">
+    <div className="wr:bg-surface wr:sticky wr:top-0 wr:z-[2] wr:-mx-1 wr:mt-5 wr:flex wr:items-center wr:gap-1.5 wr:px-1 wr:py-2.5">
       <FilterPill active={filter === "all"} onClick={() => onChange("all")} label="全部" />
       <FilterPill
         active={filter === "review"}
         onClick={() => onChange(filter === "review" ? "all" : "review")}
         label="有想法"
       />
-      {colors.length > 1 && <span className="w-1.5" />}
+      {colors.length > 1 && <span className="wr:w-1.5" />}
       {colors.length > 1 &&
         HIGHLIGHT_COLORS.filter(c => colors.includes(c.value)).map(c => (
           <Tooltip key={c.value} content={`${c.label}色划线`}>
@@ -155,11 +161,11 @@ export function NoteFilterBar({
               aria-label={`${c.label}色划线`}
               onClick={() => onChange(filter === c.value ? "all" : c.value)}
               className={cn(
-                "hover:bg-hover grid size-6 place-items-center rounded-full outline-none focus-visible:shadow-[var(--tau-focus-ring)]",
-                filter === c.value && "shadow-[inset_0_0_0_1.5px_var(--tau-ink-3)]"
+                "wr:hover:bg-hover wr:grid wr:size-6 wr:place-items-center wr:rounded-full wr:outline-none wr:focus-visible:shadow-[var(--tau-focus-ring)]",
+                filter === c.value && "wr:shadow-[inset_0_0_0_1.5px_var(--tau-ink-3)]"
               )}
             >
-              <span className={cn("size-2.5 rounded-full", HIGHLIGHT_DOT[c.value])} />
+              <span className={cn("wr:size-2.5 wr:rounded-full", HIGHLIGHT_DOT[c.value])} />
             </button>
           </Tooltip>
         ))}
@@ -172,11 +178,14 @@ function Thought({ paragraphs, className }: { paragraphs: string[]; className?: 
   return (
     <div
       className={cn(
-        "bg-accent-soft text-tau-body text-ink-1 flex gap-2 rounded-[var(--tau-radius-md)] px-3 py-2 leading-[1.75]",
+        "wr:bg-accent-soft wr:text-tau-body wr:text-ink-1 wr:flex wr:gap-2 wr:rounded-[var(--tau-radius-md)] wr:px-3 wr:py-2 wr:leading-[1.75]",
         className
       )}
     >
-      <MessageSquareQuote className="text-accent-text mt-1 size-3.5 shrink-0" strokeWidth={1.75} />
+      <MessageSquareQuote
+        className="wr:text-accent-text wr:mt-1 wr:size-3.5 wr:shrink-0"
+        strokeWidth={1.75}
+      />
       <div>
         {paragraphs.map((p, i) => (
           <p key={i}>{p}</p>
@@ -199,14 +208,17 @@ function NoteItem({
   return (
     <div
       data-note-id={note.id}
-      className="bg-hover hover:bg-press group relative rounded-[var(--tau-radius-md)] px-4 py-3 transition-colors duration-150"
+      className="wr:bg-hover wr:hover:bg-press wr:group wr:relative wr:rounded-[var(--tau-radius-md)] wr:px-4 wr:py-3 wr:transition-colors wr:duration-150"
     >
       {note.paragraphs.length > 0 && (
-        <div className={cn(SERIF, "text-ink-1 text-[15.5px] leading-[1.95]")}>
+        <div className={cn(SERIF, "wr:text-ink-1 wr:text-[15.5px] wr:leading-[1.95]")}>
           {note.paragraphs.map((p, i) => (
             <p key={i}>
               <mark
-                className={cn("bg-transparent text-inherit", markClass(note.style, note.color))}
+                className={cn(
+                  "wr:bg-transparent wr:text-inherit",
+                  markClass(note.style, note.color)
+                )}
               >
                 {p}
               </mark>
@@ -214,33 +226,33 @@ function NoteItem({
           ))}
         </div>
       )}
-      {note.review.length > 0 && <Thought paragraphs={note.review} className="mt-2.5" />}
+      {note.review.length > 0 && <Thought paragraphs={note.review} className="wr:mt-2.5" />}
       {/* 固定槽位淡入，不顶开布局 */}
-      <div className="absolute right-1.5 top-1.5 flex gap-1 opacity-0 transition-opacity duration-150 focus-within:opacity-100 group-hover:opacity-100">
+      <div className="wr:absolute wr:right-1.5 wr:top-1.5 wr:flex wr:gap-1 wr:opacity-0 wr:transition-opacity wr:duration-150 wr:focus-within:opacity-100 wr:group-hover:opacity-100">
         {onToCard && note.paragraphs.length > 0 && (
           <IconButton
             title="转为卡片"
             onClick={() => onToCard(note)}
-            className="bg-surface enabled:hover:bg-surface-hover shadow-lift size-[26px] rounded-[8px]"
+            className="wr:bg-surface wr:enabled:hover:bg-surface-hover wr:shadow-lift wr:size-[26px] wr:rounded-[8px]"
           >
-            <Layers className="size-[13px]" strokeWidth={1.75} />
+            <Layers className="wr:size-[13px]" strokeWidth={1.75} />
           </IconButton>
         )}
         {onToQuestion && note.paragraphs.length > 0 && (
           <IconButton
             title="转为问题"
             onClick={() => onToQuestion(note)}
-            className="bg-surface enabled:hover:bg-surface-hover shadow-lift size-[26px] rounded-[8px]"
+            className="wr:bg-surface wr:enabled:hover:bg-surface-hover wr:shadow-lift wr:size-[26px] wr:rounded-[8px]"
           >
-            <CircleHelp className="size-[13px]" strokeWidth={1.75} />
+            <CircleHelp className="wr:size-[13px]" strokeWidth={1.75} />
           </IconButton>
         )}
         <IconButton
           title="复制"
           onClick={() => void copy(text)}
-          className="bg-surface enabled:hover:bg-surface-hover shadow-lift size-[26px] rounded-[8px]"
+          className="wr:bg-surface wr:enabled:hover:bg-surface-hover wr:shadow-lift wr:size-[26px] wr:rounded-[8px]"
         >
-          <Copy className="size-[13px]" strokeWidth={1.75} />
+          <Copy className="wr:size-[13px]" strokeWidth={1.75} />
         </IconButton>
       </div>
     </div>
@@ -260,22 +272,22 @@ export function ChapterSection({
 }) {
   const count = chapter.notes.length + chapter.thoughts.length;
   return (
-    <section data-chapter={chapter.key} className="mt-9 scroll-mt-14">
-      <h2 className="mb-3 flex items-baseline gap-2 text-[15px] font-semibold">
-        <span className="font-tau-mono text-ink-3 text-[12px] font-medium tabular-nums">
+    <section data-chapter={chapter.key} className="wr:mt-9 wr:scroll-mt-14">
+      <h2 className="wr:mb-3 wr:flex wr:items-baseline wr:gap-2 wr:text-[15px] wr:font-semibold">
+        <span className="wr:font-tau-mono wr:text-ink-3 wr:text-[12px] wr:font-medium wr:tabular-nums">
           {String(index + 1).padStart(2, "0")}
         </span>
         {chapter.title}
-        <span className="text-tau-sm text-ink-3 font-normal tabular-nums">{count}</span>
+        <span className="wr:text-tau-sm wr:text-ink-3 wr:font-normal wr:tabular-nums">{count}</span>
       </h2>
       {/* 条目之间靠留白分组（不画分隔线） */}
-      <div className="flex flex-col gap-2.5">
+      <div className="wr:flex wr:flex-col wr:gap-2.5">
         {chapter.notes.map(note => (
           <NoteItem key={note.id} note={note} onToCard={onToCard} onToQuestion={onToQuestion} />
         ))}
       </div>
       {chapter.thoughts.map((t, i) => (
-        <Thought key={i} paragraphs={t} className="mt-2.5" />
+        <Thought key={i} paragraphs={t} className="wr:mt-2.5" />
       ))}
     </section>
   );
@@ -291,10 +303,10 @@ export function NoteToc({
   onJump(key: string): void;
 }) {
   return (
-    <nav aria-label="目录" className="flex flex-col gap-px">
-      <p className="text-tau-sm text-ink-3 flex justify-between px-2.5 pb-1.5">
+    <nav aria-label="目录" className="wr:flex wr:flex-col wr:gap-px">
+      <p className="wr:text-tau-sm wr:text-ink-3 wr:flex wr:justify-between wr:px-2.5 wr:pb-1.5">
         <span>目录</span>
-        <span className="tabular-nums">{chapters.length} 章</span>
+        <span className="wr:tabular-nums">{chapters.length} 章</span>
       </p>
       {chapters.map(ch => (
         <button
@@ -302,12 +314,12 @@ export function NoteToc({
           type="button"
           onClick={() => onJump(ch.key)}
           className={cn(
-            "text-tau-meta hover:bg-hover flex h-[30px] shrink-0 items-center gap-2 rounded-[var(--tau-radius-sm)] px-2.5 text-left outline-none focus-visible:shadow-[var(--tau-focus-ring)]",
-            active === ch.key ? "bg-hover text-ink-1 font-medium" : "text-ink-2"
+            "wr:text-tau-meta wr:hover:bg-hover wr:flex wr:h-[30px] wr:shrink-0 wr:items-center wr:gap-2 wr:rounded-[var(--tau-radius-sm)] wr:px-2.5 wr:text-left wr:outline-none wr:focus-visible:shadow-[var(--tau-focus-ring)]",
+            active === ch.key ? "wr:bg-hover wr:text-ink-1 wr:font-medium" : "wr:text-ink-2"
           )}
         >
-          <span className="min-w-0 flex-1 truncate">{ch.title}</span>
-          <span className="text-tau-tiny text-ink-3 tabular-nums">
+          <span className="wr:min-w-0 wr:flex-1 wr:truncate">{ch.title}</span>
+          <span className="wr:text-tau-tiny wr:text-ink-3 wr:tabular-nums">
             {ch.notes.length + ch.thoughts.length}
           </span>
         </button>
