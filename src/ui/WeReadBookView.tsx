@@ -91,7 +91,6 @@ export function WeReadBookView({ bookId, bookmark }: { bookId: string; bookmark?
     [bookId, detail, runtime]
   );
   const toCard = useCallback((note: BookNote) => void runAction(note, "card"), [runAction]);
-  const toQuestion = useCallback((note: BookNote) => void runAction(note, "question"), [runAction]);
 
   const jump = useCallback(
     (key: string) => {
@@ -208,7 +207,6 @@ export function WeReadBookView({ bookId, bookmark }: { bookId: string; bookmark?
                       chapter={chapter}
                       index={notes.chapters.findIndex(c => c.key === chapter.key)}
                       onToCard={toCard}
-                      onToQuestion={toQuestion}
                     />
                   ))}
                 </>
