@@ -12,11 +12,11 @@ importers:
         specifier: ^5.101.0
         version: 5.104.3(react@19.2.0)
       '@tau/plugins':
-        specifier: npm:@xiongtao.xt/tau-plugins@0.8.0
-        version: '@xiongtao.xt/tau-plugins@0.8.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(slate-dom@0.142.0(slate@0.126.2))'
+        specifier: npm:@xiongtao.xt/tau-plugins@0.34.0
+        version: '@xiongtao.xt/tau-plugins@0.34.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(slate-dom@0.142.0(slate@0.126.2))'
       '@tau/ui':
-        specifier: npm:@xiongtao.xt/tau-ui@0.1.1
-        version: '@xiongtao.xt/tau-ui@0.1.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)'
+        specifier: npm:@xiongtao.xt/tau-ui@0.3.0
+        version: '@xiongtao.xt/tau-ui@0.3.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)'
       dayjs:
         specifier: ^1.11.13
         version: 1.11.23
@@ -679,14 +679,14 @@ packages:
   '@vitest/utils@3.2.7':
     resolution: {integrity: sha512-x6BDOd7dyo3PFLY3I9/HJ25X/6OurhGXk2/B9gOZNPF7XDVjeBK4k01lQE5uvDpbuheErh91qYuE1E2OEjK3Rw==}
 
-  '@xiongtao.xt/tau-plugins@0.8.0':
-    resolution: {integrity: sha512-1L0BRX99wZimaR7DZO6urCm0IwUZiP4ItefqQbS1Rdd6RIse0/5D0Cc+jxCMhQVeuEhNwsFR15C4m+Z4hVFsjA==}
+  '@xiongtao.xt/tau-plugins@0.34.0':
+    resolution: {integrity: sha512-2MfTKvNi3mJuvhuvn7RC6OtNRkuIngOzUO6gm7hfyT1MsBKHPFoh/Fsp9OQNwPcNYx1G6QXRbesTSjIfrm6vtQ==}
     peerDependencies:
       react: 19.2.0
       react-dom: 19.2.0
 
-  '@xiongtao.xt/tau-ui@0.1.1':
-    resolution: {integrity: sha512-pzqrjS1Aj0jrsN2k57fN17piq0Zr5darCdwTh69VoXN/0RwBGrRUaAAHm3wScz5NMWCOyCeD0WZEGwOgAfSgNA==}
+  '@xiongtao.xt/tau-ui@0.3.0':
+    resolution: {integrity: sha512-tJJvMPf9gZDivwMy/FcB5rxN3GWaeRvU0AwSw8BiklcBlgi7QYTDhgyrj8Iry37Q8+OAhpFRGR0lHNio6AV20g==}
     peerDependencies:
       react: 19.2.0
       react-dom: 19.2.0
@@ -884,6 +884,11 @@ packages:
     resolution: {integrity: sha512-UyTNa3djBISdzL2UktgCrESXexQXaDQWi/WsDkbw6fBFfHlapajR58WoR+gxQ4laxfEyiHmoFrEIM3V+5XOVQg==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  lucide-react@0.468.0:
+    resolution: {integrity: sha512-6koYRhnM2N0GGZIdXzSeiNwguv1gt/FAjZOiPl76roBi3xKEXa4WmfpxgQwTTL4KipXjefrnf3oV4IsYhi4JFA==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -1470,12 +1475,12 @@ snapshots:
       loupe: 3.2.1
       tinyrainbow: 2.0.0
 
-  '@xiongtao.xt/tau-plugins@0.8.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(slate-dom@0.142.0(slate@0.126.2))':
+  '@xiongtao.xt/tau-plugins@0.34.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(slate-dom@0.142.0(slate@0.126.2))':
     dependencies:
       '@types/react': 19.2.0
       '@types/react-dom': 19.2.0(@types/react@19.2.0)
       clsx: 2.1.1
-      lucide-react: 0.399.0(react@19.2.0)
+      lucide-react: 0.468.0(react@19.2.0)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
       slate: 0.126.2
@@ -1484,7 +1489,7 @@ snapshots:
     transitivePeerDependencies:
       - slate-dom
 
-  '@xiongtao.xt/tau-ui@0.1.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+  '@xiongtao.xt/tau-ui@0.3.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       '@types/react': 19.2.0
       '@types/react-dom': 19.2.0(@types/react@19.2.0)
@@ -1669,6 +1674,10 @@ snapshots:
   loupe@3.2.1: {}
 
   lucide-react@0.399.0(react@19.2.0):
+    dependencies:
+      react: 19.2.0
+
+  lucide-react@0.468.0(react@19.2.0):
     dependencies:
       react: 19.2.0
 
