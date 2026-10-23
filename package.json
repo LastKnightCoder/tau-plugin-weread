@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.0",
-    "@tau/plugins": "npm:@xiongtao.xt/tau-plugins@0.36.0",
+    "@tau/plugins": "npm:@xiongtao.xt/tau-plugins@0.37.0",
     "@tau/ui": "npm:@xiongtao.xt/tau-ui@0.4.0",
     "dayjs": "^1.11.13",
     "lucide-react": "^0.399.0",
