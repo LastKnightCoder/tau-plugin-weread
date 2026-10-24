@@ -1,3 +1,4 @@
+import { buildPortablePluginManifest, PORTABLE_SHARED_MODULES } from "@tau/plugins/portable";
 /**
  * 构建插件包：esbuild 打包入口（共享模块外置），Tailwind 只编译本插件源码用到的类，
  * 输出 dist/<版本>-<构建号>/（manifest + main.js + main.css，带完整性摘要）与 ZIP。
@@ -10,17 +11,10 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const SHARED = [
-  "@tau/plugins",
-  "@tau/ui",
-  "react",
-  "react-dom",
-  "react-dom/client",
-  "react/jsx-runtime",
-  "react/jsx-dev-runtime",
-];
+const SHARED = [...PORTABLE_SHARED_MODULES];
 
 const manifest = JSON.parse(await readFile("manifest.json", "utf8"));
+if (!manifest.targets) throw new Error("插件只接受格式 3 作者清单");
 
 /** @type {import("esbuild").Plugin} */
 const tailwind = {
@@ -102,7 +96,7 @@ try {
       .digest("hex");
   await writeFile(
     path.join(staging, "manifest.json"),
-    JSON.stringify({ ...manifest, styles: "main.css", integrity }, null, 2)
+    JSON.stringify(buildPortablePluginManifest(manifest, { main: "main.js", styles: "main.css", integrity }), null, 2)
   );
   const destination = path.resolve("dist", `${manifest.version}-${buildId}`);
   await rename(staging, destination);
