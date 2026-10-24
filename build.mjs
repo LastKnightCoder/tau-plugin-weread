@@ -14,7 +14,6 @@ import path from "node:path";
 const SHARED = [...PORTABLE_SHARED_MODULES];
 
 const manifest = JSON.parse(await readFile("manifest.json", "utf8"));
-if (!manifest.targets) throw new Error("插件只接受格式 3 作者清单");
 
 /** @type {import("esbuild").Plugin} */
 const tailwind = {
@@ -96,7 +95,11 @@ try {
       .digest("hex");
   await writeFile(
     path.join(staging, "manifest.json"),
-    JSON.stringify(buildPortablePluginManifest(manifest, { main: "main.js", styles: "main.css", integrity }), null, 2)
+    JSON.stringify(
+      buildPortablePluginManifest(manifest, { main: "main.js", styles: "main.css", integrity }),
+      null,
+      2
+    )
   );
   const destination = path.resolve("dist", `${manifest.version}-${buildId}`);
   await rename(staging, destination);
