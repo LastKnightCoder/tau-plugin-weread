@@ -4,7 +4,7 @@
   "description": "同步微信读书书架、划线与想法，并在 Tau 中查看和引用摘录。",
   "categories": ["page"],
   "keywords": ["微信读书", "划线", "书架"],
-  "version": "1.0.14",
+  "version": "1.0.15",
   "targets": {
     "desktop": {
       "minAppVersion": "0.59.4"
