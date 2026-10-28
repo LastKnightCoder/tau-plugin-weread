@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ExternalLink, KeyRound } from "lucide-react";
-import { Button, Input, Panel, toast } from "@tau/ui";
+import { Button, Input, toast } from "@tau/ui";
 import { openExternal, useWeRead, useWeReadState } from "../hooks";
 import { WEREAD_API_KEY_URL } from "./ConnectPanel";
 
@@ -33,7 +33,7 @@ export function WeReadSettings() {
   };
 
   return (
-    <Panel className="wr:flex wr:flex-col wr:gap-3">
+    <div className="wr:flex wr:flex-col wr:gap-3">
       <div className="wr:flex wr:items-center wr:gap-2">
         <span className="wr:text-tau-body wr:text-ink-1 wr:font-medium">连接状态</span>
         <span
@@ -117,6 +117,6 @@ export function WeReadSettings() {
       <p className="wr:text-tau-sm wr:text-ink-3">
         API Key 只保存在当前工作区。断开后书架缓存和已同步到 Tau 的划线保留。
       </p>
-    </Panel>
+    </div>
   );
 }
