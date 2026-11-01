@@ -4,7 +4,6 @@
  * 未连接时照常展示本地缓存；首次使用在纸内引导填 API Key。
  */
 
-import { useMemo, useState } from "react";
 import {
   ArrowDownUp,
   BookOpen,
@@ -17,27 +16,20 @@ import {
   Search,
   SearchX,
 } from "lucide-react";
-import { Button, FadeScroll, FilterPill, Input, Loading, Menu, cn, toast } from "@tau/ui";
+import { Button, FadeScroll, FilterPill, Input, Loading, Menu, cn } from "@tau/ui";
 import {
   SHELF_SORTS,
   STATUS_FILTERS,
   formatMinutes,
   formatSyncedAt,
-  matchQuery,
-  matchStatus,
-  rankArchives,
-  readingNow,
-  sortBooks,
-  toBook,
   type ShelfLayout,
   type ShelfSort,
   type ShelfStatusFilter,
-  type WeReadBook,
 } from "../model";
-import { useWeRead, useWeReadState } from "../hooks";
 import type { Connection } from "../runtime";
 import { ConnectPanel } from "./ConnectPanel";
 import { CoverTile, ReadingCard, ShelfList } from "./ShelfItems";
+import { useShelf } from "./useShelf";
 
 const LAYOUTS: { value: ShelfLayout; label: string; icon: typeof LayoutGrid }[] = [
   { value: "cover", label: "封面", icon: LayoutGrid },
@@ -45,68 +37,37 @@ const LAYOUTS: { value: ShelfLayout; label: string; icon: typeof LayoutGrid }[] 
 ];
 
 export function WeReadView({ onSettings }: { onSettings(): void }) {
-  const { runtime, pages } = useWeRead();
-  const connection = useWeReadState(state => state.connection);
-  const metas = useWeReadState(state => state.books);
-  const lastSyncedAt = useWeReadState(state => state.lastSyncedAt);
-  const loading = useWeReadState(state => !state.loaded);
-  const syncing = useWeReadState(state => state.syncing);
-  const progress = useWeReadState(state => state.progress);
-  const { layout, sort } = useWeReadState(state => state.prefs);
-  const books = useMemo(
-    () =>
-      metas.map(metaData =>
-        toBook({
-          metaData,
-          chapterHighlights: [],
-          bookReview: { chapterReviews: [], bookReviews: [] },
-        })
-      ),
-    [metas]
-  );
-
-  const [archive, setArchive] = useState("");
-  const [status, setStatus] = useState<ShelfStatusFilter>("all");
-  const [query, setQuery] = useState("");
-
-  const archives = useMemo(() => rankArchives(books), [books]);
-  // 分类被同步掉后回到全部
-  const activeArchive = archives.some(a => a.name === archive) ? archive : "";
-  const inArchive = useMemo(
-    () => (activeArchive ? books.filter(b => b.archive === activeArchive) : books),
-    [books, activeArchive]
-  );
-  const visible = useMemo(
-    () =>
-      sortBooks(
-        inArchive.filter(b => matchStatus(b, status) && matchQuery(b, query)),
-        sort
-      ),
-    [inArchive, status, query, sort]
-  );
-  const reading = useMemo(() => readingNow(inArchive), [inArchive]);
-  const totalMinutes = useMemo(() => books.reduce((sum, b) => sum + b.minutes, 0), [books]);
-
-  const open = (book: WeReadBook) => void pages.book.open({ bookId: book.id });
-  const setSort = (value: ShelfSort) => runtime.setPrefs({ sort: value });
-  const sync = (full = false) =>
-    void runtime.sync({ full }).then(
-      outcome => {
-        if (!outcome) return;
-        toast.success(
-          `同步完成，共 ${outcome.total} 本书，更新 ${outcome.updated} 本` +
-            (outcome.failed ? `，${outcome.failed} 本下次重试` : "")
-        );
-      },
-      error => toast.error(error instanceof Error ? error.message : "同步失败，请稍后再试")
-    );
+  const {
+    connection,
+    books,
+    lastSyncedAt,
+    loading,
+    syncing,
+    progress,
+    layout,
+    sort,
+    archives,
+    activeArchive,
+    setArchive,
+    status,
+    setStatus,
+    query,
+    setQuery,
+    visible,
+    reading,
+    totalMinutes,
+    filtering,
+    statusLabel,
+    sortLabel,
+    open,
+    setSort,
+    setLayout,
+    clearFilters,
+    sync,
+  } = useShelf();
   const toSettings = onSettings;
 
   if (loading) return <Loading />;
-
-  const filtering = status !== "all" || query.trim().length > 0;
-  const statusLabel = STATUS_FILTERS.find(f => f.value === status)?.label ?? "";
-  const sortLabel = SHELF_SORTS.find(s => s.value === sort)?.label ?? "";
 
   const syncButton =
     connection === "none" || connection === "invalid" ? (
@@ -306,7 +267,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
               >
                 <Menu.RadioGroup
                   value={layout}
-                  onValueChange={v => runtime.setPrefs({ layout: v as ShelfLayout })}
+                  onValueChange={v => setLayout(v as ShelfLayout)}
                 >
                   {LAYOUTS.map(l => (
                     <Menu.RadioItem key={l.value} value={l.value}>
@@ -354,10 +315,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                       variant="secondary"
                       size="sm"
                       className="wr:mt-1"
-                      onClick={() => {
-                        setQuery("");
-                        setStatus("all");
-                      }}
+                      onClick={clearFilters}
                     >
                       清除筛选
                     </Button>
@@ -393,7 +351,7 @@ function SectionTitle({ title, hint }: { title: string; hint?: string }) {
   );
 }
 
-function EmptyShelf({
+export function EmptyShelf({
   connection,
   syncing,
   progress,

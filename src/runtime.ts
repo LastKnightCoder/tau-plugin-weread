@@ -52,6 +52,8 @@ export interface RuntimeState {
   loaded: boolean;
   syncing: boolean;
   progress: { completed: number; total: number } | null;
+  /** 本次启用以来最近一次成功同步的结果（不落盘） */
+  lastOutcome: SyncOutcome | null;
   prefs: Prefs;
 }
 
@@ -171,14 +173,43 @@ export class WeReadRuntime {
     loaded: false,
     syncing: false,
     progress: null,
+    lastOutcome: null,
     prefs: DEFAULT_PREFS,
   };
   private readonly listeners = new Set<() => void>();
   private validation = 0;
+  private syncingTask: Promise<SyncOutcome | null> | null = null;
+  private autoTimer: ReturnType<typeof setTimeout> | undefined;
+  private autoRequested = false;
+  private autoDraining = false;
+  private foreground = typeof document === "undefined" || document.visibilityState !== "hidden";
 
   constructor(readonly context: PluginContext) {
     this.client = new WeReadClient({ fetch: context.fetch, getApiKey: () => this.state.apiKey });
-    context.register({ dispose: () => this.queryClient.clear() });
+    const resume = () => {
+      this.foreground = true;
+      this.requestAutoSync();
+    };
+    const background = () => {
+      this.foreground = false;
+      this.autoRequested = false;
+      this.clearAutoTimer();
+    };
+    const dispose = () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("tau:app-foreground", resume);
+        window.removeEventListener("tau:app-background", background);
+      }
+      background();
+      context.signal.removeEventListener("abort", dispose);
+      this.queryClient.clear();
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("tau:app-foreground", resume);
+      window.addEventListener("tau:app-background", background);
+    }
+    context.signal.addEventListener("abort", dispose, { once: true });
+    context.register({ dispose });
   }
 
   getState = () => this.state;
@@ -269,12 +300,76 @@ export class WeReadRuntime {
     });
   }
 
+  private clearAutoTimer() {
+    if (this.autoTimer !== undefined) clearTimeout(this.autoTimer);
+    this.autoTimer = undefined;
+  }
+
+  private canAutoSync() {
+    return (
+      !this.context.signal.aborted &&
+      this.foreground &&
+      this.state.loaded &&
+      this.state.connection === "valid"
+    );
+  }
+
+  private requestAutoSync() {
+    if (!this.canAutoSync()) return;
+    this.autoRequested = true;
+    this.clearAutoTimer();
+    this.autoTimer = setTimeout(() => {
+      this.autoTimer = undefined;
+      void this.drainAutoSync();
+    }, 800);
+  }
+
+  private async drainAutoSync() {
+    if (this.autoDraining || !this.canAutoSync()) return;
+    this.autoDraining = true;
+    try {
+      while (this.autoRequested && this.canAutoSync() && this.autoTimer === undefined) {
+        if (this.syncingTask) {
+          await this.syncingTask.catch(() => undefined);
+          continue;
+        }
+        this.autoRequested = false;
+        try {
+          await this.sync({ silent: true });
+        } catch (error) {
+          if (!this.context.signal.aborted) console.error("[weread] 自动同步失败", error);
+        }
+      }
+    } finally {
+      this.autoDraining = false;
+    }
+  }
+
   /**
    * 同步书架（默认增量：只对新书和最近读过 / 新记笔记的书补拉详情）；full = 全部重拉。
    * 再对笔记指纹变化的书拉划线与想法，按书写入摘录。同一时刻只跑一轮。
    */
-  async sync({ silent = false, full = false } = {}): Promise<SyncOutcome | null> {
-    if (this.state.syncing || this.state.connection !== "valid") return null;
+  sync(options: { silent?: boolean; full?: boolean } = {}): Promise<SyncOutcome | null> {
+    if (this.syncingTask) return this.syncingTask;
+    if (this.state.connection !== "valid" || this.context.signal.aborted)
+      return Promise.resolve(null);
+    const task = Promise.resolve()
+      .then(() => this.performSync(options))
+      .finally(() => {
+        if (this.syncingTask === task) this.syncingTask = null;
+      });
+    this.syncingTask = task;
+    return task;
+  }
+
+  private async performSync({
+    silent = false,
+    full = false,
+  }: {
+    silent?: boolean;
+    full?: boolean;
+  }): Promise<SyncOutcome> {
+    this.context.signal.throwIfAborted();
     this.set({ syncing: true, progress: silent ? null : { completed: 0, total: 0 } });
     const onProgress = silent
       ? undefined
@@ -282,6 +377,7 @@ export class WeReadRuntime {
     try {
       const cached = this.state.books;
       const result = await this.client.syncMetadata(cached, { full, onProgress });
+      this.context.signal.throwIfAborted();
       if (result.metadataList.length === 0 && cached.length > 0)
         throw new Error("没有获取到任何书籍信息");
       const removed = new Set(result.removedBookIds);
@@ -290,11 +386,15 @@ export class WeReadRuntime {
       await this.saveShelf(books, this.state.lastSyncedAt);
 
       const notes = await this.syncNotes(books, result.noteFingerprints, full, onProgress);
+      this.context.signal.throwIfAborted();
       books = notes.books;
       await this.retireMissingSources(result.presentBookIds, cached);
       await this.saveShelf(books, Date.now());
       const failed = result.failedBookIds.length + notes.failed;
-      return { total: books.length, updated: result.requested - failed, failed };
+      const outcome = { total: books.length, updated: result.requested - failed, failed };
+      this.set({ lastOutcome: outcome });
+      await this.queryClient.invalidateQueries({ queryKey: ["book"] }, { cancelRefetch: false });
+      return outcome;
     } finally {
       this.set({ syncing: false, progress: null });
     }

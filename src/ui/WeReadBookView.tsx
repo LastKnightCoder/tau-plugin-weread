@@ -1,105 +1,57 @@
 /**
  * 微信读书单本笔记：一整张纸——左侧目录停靠在纸内（开关在纸顶工具行），
- * 正文列依次是书头、书评、吸顶过滤条、按章节排的划线与想法。悬停可复制、转为卡片或问题。
+ * 正文列依次是书头、书评、吸顶过滤条、按章节排的划线与想法。悬停可复制、转为卡片。
  * 未连接时从 Tau 摘录还原；已连接则拉最新笔记并写回摘录。
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, Highlighter, PanelLeft } from "lucide-react";
-import { Button, FadeScroll, IconButton, Loading, Tooltip, cn, toast } from "@tau/ui";
-import {
-  buildBookNotes,
-  countNotes,
-  filterNotes,
-  notesToMarkdown,
-  toBook,
-  type BookNote,
-  type HighlightColor,
-  type NoteFilter,
-} from "../model";
-import { openExternal, scrollToAndFlash, useBookDetail, useWeRead, useWeReadState } from "../hooks";
+import { Button, FadeScroll, IconButton, Loading, Tooltip, cn } from "@tau/ui";
+import { openExternal, useWeRead, useWeReadState } from "../hooks";
 import { BookHeader, BookReviews, ChapterSection, NoteFilterBar, NoteToc } from "./NoteParts";
+import { useBookPage } from "./useBookPage";
 
-export function WeReadBookView({ bookId, bookmark }: { bookId: string; bookmark?: string }) {
-  const { runtime, pages } = useWeRead();
-  const connected = useWeReadState(state => state.connection === "valid");
+export function WeReadBookView({
+  bookId,
+  bookmark,
+  bookmarkRequest,
+}: {
+  bookId: string;
+  bookmark?: string;
+  bookmarkRequest?: string;
+}) {
+  const { runtime } = useWeRead();
   const tocOpen = useWeReadState(state => state.prefs.tocOpen);
-  const { detail, loading, refreshing, refresh } = useBookDetail(bookId);
   const toggleToc = () => runtime.setPrefs({ tocOpen: !tocOpen });
-
-  const [filter, setFilter] = useState<NoteFilter>("all");
-  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null);
-
-  const book = useMemo(() => (detail ? toBook(detail.notebook) : null), [detail]);
-  const notes = useMemo(() => (detail ? buildBookNotes(detail.notebook) : null), [detail]);
-  const chapters = useMemo(() => (notes ? filterNotes(notes, filter) : []), [notes, filter]);
-  const counts = useMemo(() => countNotes(notes?.chapters ?? []), [notes]);
-  const colors = useMemo(() => {
-    const set = new Set<HighlightColor>();
-    notes?.chapters.forEach(ch => ch.notes.forEach(n => n.paragraphs.length && set.add(n.color)));
-    return [...set];
-  }, [notes]);
+  const {
+    pages,
+    connected,
+    detail,
+    loading,
+    refreshing,
+    refresh,
+    book,
+    notes,
+    chapters,
+    counts,
+    colors,
+    filter,
+    setFilter,
+    activeKey,
+    toCard,
+    jump,
+    empty,
+    status,
+    copyMarkdown,
+  } = useBookPage({
+    bookId,
+    bookmark,
+    bookmarkRequest,
+    container: scrollEl,
+    anchorTop: () => (scrollEl?.getBoundingClientRect().top ?? 0) + 72,
+  });
   const showToc = tocOpen && chapters.length > 1;
-
-  // 目录高亮：正文滚过的最后一个章节
-  useEffect(() => {
-    if (!scrollEl) return;
-    const update = () => {
-      const top = scrollEl.getBoundingClientRect().top + 72;
-      let current: string | null = null;
-      for (const el of scrollEl.querySelectorAll<HTMLElement>("[data-chapter]")) {
-        if (el.getBoundingClientRect().top <= top) current = el.dataset.chapter ?? null;
-        else break;
-      }
-      setActiveKey(current ?? chapters[0]?.key ?? null);
-    };
-    update();
-    scrollEl.addEventListener("scroll", update, { passive: true });
-    return () => scrollEl.removeEventListener("scroll", update);
-  }, [scrollEl, chapters]);
-
-  // 摘录打开到原处：清掉筛选，等笔记渲染后滚到那一条（每个 bookmark 只定位一次）；找不到就停在书首
-  const pendingBookmark = useRef<string | null>(null);
-  useEffect(() => {
-    pendingBookmark.current = bookmark ?? null;
-    if (bookmark) setFilter("all");
-  }, [bookmark]);
-  useEffect(() => {
-    const target = pendingBookmark.current;
-    if (!target || !scrollEl || filter !== "all") return;
-    const el = scrollEl.querySelector(`[data-note-id="${CSS.escape(target)}"]`);
-    if (!el) return;
-    pendingBookmark.current = null;
-    scrollToAndFlash(el);
-  }, [scrollEl, chapters, filter]);
-
-  // 单书页的条目 id 是 bookmarkId（划线）或 reviewId（只有想法），对应摘录的两种外部 id
-  const runAction = useCallback(
-    async (note: BookNote, actionId: string) => {
-      const ids = [`${bookId}:${note.id}`, `${bookId}:review:${note.id}`];
-      const entry = detail?.entries.find(item => ids.includes(item.externalId) && !item.deleted);
-      if (!entry) {
-        toast.error("这条划线还没有同步为摘录，请稍后重试");
-        return;
-      }
-      const actions = await runtime.context.materials.actions(entry.ref);
-      const action = actions.find(item => item.id === actionId);
-      if (!action) toast.error("当前客户端不支持此操作");
-      else await action.run();
-    },
-    [bookId, detail, runtime]
-  );
-  const toCard = useCallback((note: BookNote) => void runAction(note, "card"), [runAction]);
-
-  const jump = useCallback(
-    (key: string) => {
-      scrollEl
-        ?.querySelector(`[data-chapter="${CSS.escape(key)}"]`)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    },
-    [scrollEl]
-  );
 
   if (loading) return <Loading />;
 
@@ -121,13 +73,6 @@ export function WeReadBookView({ bookId, bookmark }: { bookId: string; bookmark?
       </div>
     );
   }
-
-  const empty = notes.chapters.length === 0 && notes.bookReviews.length === 0;
-  const status = detail.error
-    ? `拉取失败，显示的是本地缓存：${detail.error}`
-    : !connected
-      ? "未连接微信读书，显示的是本地缓存"
-      : null;
 
   return (
     <div className="wr:mx-auto wr:flex wr:h-full wr:min-h-0 wr:w-full wr:max-w-[1720px] wr:flex-col wr:px-4 wr:pb-4 wr:pt-1">
@@ -175,14 +120,7 @@ export function WeReadBookView({ bookId, bookmark }: { bookId: string; bookmark?
                 refreshing={refreshing}
                 onRefresh={refresh}
                 onOpenWeb={book.webUrl ? () => openExternal(book.webUrl) : undefined}
-                onCopyMarkdown={
-                  empty
-                    ? undefined
-                    : () =>
-                        void window.navigator.clipboard
-                          .writeText(notesToMarkdown(book, notes))
-                          .then(() => toast.success("已复制为 Markdown"))
-                }
+                onCopyMarkdown={copyMarkdown}
               />
               {status && <p className="wr:text-tau-sm wr:text-warn wr:mt-3">{status}</p>}
               <BookReviews reviews={notes.bookReviews} />

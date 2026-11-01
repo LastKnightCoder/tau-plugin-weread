@@ -1,5 +1,6 @@
 /** 笔记页的内容件：书头、书评、划线条目、过滤条、目录 */
 
+import type { ReactNode } from "react";
 import {
   BookOpen,
   Copy,
@@ -27,31 +28,32 @@ async function copy(text: string) {
   toast.success("已复制");
 }
 
-export function BookHeader({
+/** 书头的信息部分：封面、书名、作者 · 出版社、进度、阅读与笔记统计；操作按钮由调用方放在 children */
+export function BookInfo({
   book,
   counts,
-  connected,
-  refreshing,
-  onOpenWeb,
-  onRefresh,
-  onCopyMarkdown,
+  compact = false,
+  children,
 }: {
   book: WeReadBook;
   counts: { highlights: number; reviews: number };
-  connected: boolean;
-  refreshing: boolean;
-  onOpenWeb?: () => void;
-  onRefresh(): void;
-  onCopyMarkdown?: () => void;
+  /** 手机：封面与书名缩小 */
+  compact?: boolean;
+  children?: ReactNode;
 }) {
   return (
-    <header className="wr:flex wr:items-start wr:gap-5">
-      <BookCover book={book} className="wr:w-[88px]" titleClassName="wr:text-[12px]" />
+    <header className={cn("wr:flex wr:items-start", compact ? "wr:gap-3.5" : "wr:gap-5")}>
+      <BookCover
+        book={book}
+        className={compact ? "wr:w-[76px]" : "wr:w-[88px]"}
+        titleClassName={compact ? "wr:text-[10px]" : "wr:text-[12px]"}
+      />
       <div className="wr:min-w-0 wr:flex-1">
         <h1
           className={cn(
             SERIF,
-            "wr:text-[24px] wr:font-semibold wr:leading-[1.3] wr:tracking-[0.02em]"
+            "wr:font-semibold wr:leading-[1.3] wr:tracking-[0.02em]",
+            compact ? "wr:text-[21px]" : "wr:text-[24px]"
           )}
         >
           {book.title}
@@ -82,32 +84,56 @@ export function BookHeader({
             </span>
           )}
         </p>
-        <div className="wr:-ml-2 wr:mt-3 wr:flex wr:flex-wrap wr:gap-1">
-          {onOpenWeb && (
-            <Button variant="ghost" size="sm" icon={BookOpen} onClick={onOpenWeb}>
-              在微信读书中打开
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={RefreshCw}
-            loading={refreshing}
-            loadingText="拉取中…"
-            disabled={!connected}
-            title={connected ? undefined : "连接微信读书后才能拉取"}
-            onClick={onRefresh}
-          >
-            重新拉取笔记
-          </Button>
-          {onCopyMarkdown && (
-            <Button variant="ghost" size="sm" icon={Copy} onClick={onCopyMarkdown}>
-              复制为 Markdown
-            </Button>
-          )}
-        </div>
+        {children}
       </div>
     </header>
+  );
+}
+
+export function BookHeader({
+  book,
+  counts,
+  connected,
+  refreshing,
+  onOpenWeb,
+  onRefresh,
+  onCopyMarkdown,
+}: {
+  book: WeReadBook;
+  counts: { highlights: number; reviews: number };
+  connected: boolean;
+  refreshing: boolean;
+  onOpenWeb?: () => void;
+  onRefresh(): void;
+  onCopyMarkdown?: () => void;
+}) {
+  return (
+    <BookInfo book={book} counts={counts}>
+      <div className="wr:-ml-2 wr:mt-3 wr:flex wr:flex-wrap wr:gap-1">
+        {onOpenWeb && (
+          <Button variant="ghost" size="sm" icon={BookOpen} onClick={onOpenWeb}>
+            在微信读书中打开
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={RefreshCw}
+          loading={refreshing}
+          loadingText="拉取中…"
+          disabled={!connected}
+          title={connected ? undefined : "连接微信读书后才能拉取"}
+          onClick={onRefresh}
+        >
+          重新拉取笔记
+        </Button>
+        {onCopyMarkdown && (
+          <Button variant="ghost" size="sm" icon={Copy} onClick={onCopyMarkdown}>
+            复制为 Markdown
+          </Button>
+        )}
+      </div>
+    </BookInfo>
   );
 }
 
@@ -173,7 +199,7 @@ export function NoteFilterBar({
 }
 
 /** 想法：浅 accent 底的批注块，是笔记页的视觉重点（纯划线只有原文） */
-function Thought({ paragraphs, className }: { paragraphs: string[]; className?: string }) {
+export function Thought({ paragraphs, className }: { paragraphs: string[]; className?: string }) {
   return (
     <div
       className={cn(
@@ -194,19 +220,10 @@ function Thought({ paragraphs, className }: { paragraphs: string[]; className?: 
   );
 }
 
-function NoteItem({
-  note,
-  onToCard,
-}: {
-  note: BookNote;
-  onToCard?: (note: BookNote) => void;
-}) {
-  const text = [...note.paragraphs, ...(note.review.length ? ["", ...note.review] : [])].join("\n");
+/** 划线原文（还原微信读书的样式与颜色）+ 想法 */
+export function NoteQuote({ note }: { note: BookNote }) {
   return (
-    <div
-      data-note-id={note.id}
-      className="wr:bg-hover wr:hover:bg-press wr:group wr:relative wr:rounded-[var(--tau-radius-md)] wr:px-4 wr:py-3 wr:transition-colors wr:duration-150"
-    >
+    <>
       {note.paragraphs.length > 0 && (
         <div className={cn(SERIF, "wr:text-ink-1 wr:text-[15.5px] wr:leading-[1.95]")}>
           {note.paragraphs.map((p, i) => (
@@ -223,7 +240,48 @@ function NoteItem({
           ))}
         </div>
       )}
-      {note.review.length > 0 && <Thought paragraphs={note.review} className="wr:mt-2.5" />}
+      {note.review.length > 0 && (
+        <Thought paragraphs={note.review} className={note.paragraphs.length ? "wr:mt-2.5" : undefined} />
+      )}
+    </>
+  );
+}
+
+/** 复制用的纯文本：原文，有想法时空一行接想法 */
+export const noteText = (note: BookNote, withReview = true) =>
+  [...note.paragraphs, ...(withReview && note.review.length ? ["", ...note.review] : [])].join("\n");
+
+function NoteItem({
+  note,
+  onToCard,
+  onPress,
+}: {
+  note: BookNote;
+  onToCard?: (note: BookNote) => void;
+  onPress?: (note: BookNote) => void;
+}) {
+  if (onPress)
+    return (
+      <div
+        data-note-id={note.id}
+        role="button"
+        tabIndex={0}
+        onClick={() => {
+          // 长按选字后的点按只取消选区，不弹面板
+          if (!window.getSelection()?.isCollapsed) return;
+          onPress(note);
+        }}
+        className="wr:bg-hover wr:active:bg-press wr:rounded-[14px] wr:px-3.5 wr:py-3 wr:outline-none wr:transition-colors wr:duration-150"
+      >
+        <NoteQuote note={note} />
+      </div>
+    );
+  return (
+    <div
+      data-note-id={note.id}
+      className="wr:bg-hover wr:hover:bg-press wr:group wr:relative wr:rounded-[var(--tau-radius-md)] wr:px-4 wr:py-3 wr:transition-colors wr:duration-150"
+    >
+      <NoteQuote note={note} />
       {/* 固定槽位淡入，不顶开布局 */}
       <div className="wr:absolute wr:right-1.5 wr:top-1.5 wr:flex wr:gap-1 wr:opacity-0 wr:transition-opacity wr:duration-150 wr:focus-within:opacity-100 wr:group-hover:opacity-100">
         {onToCard && note.paragraphs.length > 0 && (
@@ -237,7 +295,7 @@ function NoteItem({
         )}
         <IconButton
           title="复制"
-          onClick={() => void copy(text)}
+          onClick={() => void copy(noteText(note))}
           className="wr:bg-surface wr:enabled:hover:bg-surface-hover wr:shadow-lift wr:size-[26px] wr:rounded-[8px]"
         >
           <Copy className="wr:size-[13px]" strokeWidth={1.75} />
@@ -251,14 +309,20 @@ export function ChapterSection({
   chapter,
   index,
   onToCard,
+  onPress,
 }: {
   chapter: NoteChapter;
   index: number;
   onToCard?: (note: BookNote) => void;
+  /** 手机：点一条划线出操作面板（不显示悬停按钮） */
+  onPress?: (note: BookNote) => void;
 }) {
   const count = chapter.notes.length + chapter.thoughts.length;
   return (
-    <section data-chapter={chapter.key} className="wr:mt-9 wr:scroll-mt-14">
+    <section
+      data-chapter={chapter.key}
+      className={onPress ? "wr:mt-5 wr:scroll-mt-14" : "wr:mt-9 wr:scroll-mt-14"}
+    >
       <h2 className="wr:mb-3 wr:flex wr:items-baseline wr:gap-2 wr:text-[15px] wr:font-semibold">
         <span className="wr:font-tau-mono wr:text-ink-3 wr:text-[12px] wr:font-medium wr:tabular-nums">
           {String(index + 1).padStart(2, "0")}
@@ -269,7 +333,7 @@ export function ChapterSection({
       {/* 条目之间靠留白分组（不画分隔线） */}
       <div className="wr:flex wr:flex-col wr:gap-2.5">
         {chapter.notes.map(note => (
-          <NoteItem key={note.id} note={note} onToCard={onToCard} />
+          <NoteItem key={note.id} note={note} onToCard={onToCard} onPress={onPress} />
         ))}
       </div>
       {chapter.thoughts.map((t, i) => (

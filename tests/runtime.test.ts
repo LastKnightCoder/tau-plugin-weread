@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   JsonValue,
   PluginContext,
@@ -11,7 +11,10 @@ import type { ChapterHighlightReview, Metadata } from "../src/service/types";
 import { WeReadSessionExpiredError } from "../src/service/errors";
 
 /** 与宿主同语义的内存摘录：按 externalId 合并，缺席软删除，id 稳定 */
+const lifetimes: AbortController[] = [];
 function fakeContext() {
+  const lifetime = new AbortController();
+  lifetimes.push(lifetime);
   const store = new Map<string, JsonValue>();
   const rows = new Map<string, PluginExcerptEntry & { source: string; title: string }>();
   let nextId = 1;
@@ -23,8 +26,9 @@ function fakeContext() {
       const seen = new Set(items.map(item => item.externalId));
       for (const item of items) {
         const prev = rows.get(item.externalId);
+        const ref = prev?.ref ?? { kind: "excerpt", id: nextId++, identity: `fixture:${item.externalId}` };
         rows.set(item.externalId, {
-          ref: prev?.ref ?? { kind: "excerpt", id: nextId++ },
+          ref,
           externalId: item.externalId,
           quote: item.quote,
           note: item.note ?? "",
@@ -57,7 +61,7 @@ function fakeContext() {
   const context = {
     pluginId: "weread",
     workspaceId: "w",
-    signal: new AbortController().signal,
+    signal: lifetime.signal,
     register: () => ({ dispose: () => undefined }),
     fetch: vi.fn(),
     storage: {
@@ -67,8 +71,15 @@ function fakeContext() {
     },
     excerpts,
   } as unknown as PluginContext;
-  return { context, store, rows, replaced, excerpts };
+  return { context, store, rows, replaced, excerpts, lifetime };
 }
+
+afterEach(() => {
+  for (const lifetime of lifetimes.splice(0)) lifetime.abort();
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 const meta = (bookId: string, extra: Partial<Metadata> = {}): Metadata => ({
   bookId,
@@ -124,6 +135,121 @@ beforeEach(async () => {
 });
 
 describe("WeReadRuntime", () => {
+  const emptyMetadata = {
+    metadataList: [],
+    presentBookIds: [],
+    failedBookIds: [],
+    bookArchiveInfo: {},
+    removedBookIds: [],
+    requested: 0,
+    noteFingerprints: {},
+  };
+  const foregroundRuntime = async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", new EventTarget());
+    const context = fakeContext();
+    context.store.set("apiKey", "key");
+    const value = new WeReadRuntime(context.context);
+    vi.spyOn(value.client, "validateSession").mockResolvedValue();
+    const sync = vi.spyOn(value, "sync").mockResolvedValueOnce(null);
+    await value.load();
+    sync.mockClear();
+    const metadata = vi.spyOn(value.client, "syncMetadata").mockResolvedValue(emptyMetadata);
+    return { value, context, metadata, sync };
+  };
+  const resume = () => window.dispatchEvent(new Event("tau:app-foreground"));
+
+  it("通用前台信号防抖后静默增量同步，持续前台不定时拉取", async () => {
+    const { value, metadata, sync } = await foregroundRuntime();
+    value.queryClient.setQueryData(["book", "A", "valid"], { cached: true });
+    resume();
+    resume();
+    resume();
+    await vi.advanceTimersByTimeAsync(799);
+    expect(metadata).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(metadata).toHaveBeenCalledTimes(1);
+    expect(sync).toHaveBeenCalledWith({ silent: true });
+    expect(metadata.mock.calls[0][1]?.full).toBe(false);
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(metadata).toHaveBeenCalledTimes(1);
+    expect(value.getState().lastOutcome).toEqual({ total: 0, updated: 0, failed: 0 });
+    expect(value.queryClient.getQueryState(["book", "A", "valid"])?.isInvalidated).toBe(true);
+  });
+
+  it("自动同步失败会释放在途状态，下次恢复可以重试且不产生未处理拒绝", async () => {
+    const { value, metadata } = await foregroundRuntime();
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    metadata.mockRejectedValueOnce(new Error("离线"));
+    resume();
+    await vi.advanceTimersByTimeAsync(800);
+    expect(value.getState().syncing).toBe(false);
+    expect(log).toHaveBeenCalledTimes(1);
+    resume();
+    await vi.advanceTimersByTimeAsync(800);
+    expect(metadata).toHaveBeenCalledTimes(2);
+    expect(value.getState().lastOutcome).toEqual({ total: 0, updated: 0, failed: 0 });
+  });
+
+  it("手动与自动共享在途 Promise，恢复期间多次请求只追加一轮", async () => {
+    const { value, metadata } = await foregroundRuntime();
+    let finish!: (value: typeof emptyMetadata) => void;
+    metadata.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finish = resolve;
+        })
+    );
+    const first = value.sync();
+    const second = value.sync();
+    expect(second).toBe(first);
+    await vi.advanceTimersByTimeAsync(0);
+    resume();
+    resume();
+    await vi.advanceTimersByTimeAsync(800);
+    expect(metadata).toHaveBeenCalledTimes(1);
+    finish(emptyMetadata);
+    await first;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(metadata).toHaveBeenCalledTimes(2);
+    expect(value.getState().syncing).toBe(false);
+  });
+
+  it("离开前台或停用会清掉防抖与监听，不启动迟到同步", async () => {
+    const { context, metadata } = await foregroundRuntime();
+    resume();
+    window.dispatchEvent(new Event("tau:app-background"));
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(metadata).not.toHaveBeenCalled();
+    resume();
+    context.lifetime.abort();
+    await vi.advanceTimersByTimeAsync(1000);
+    resume();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(metadata).not.toHaveBeenCalled();
+  });
+
+  it("停用时正在等待已有同步的恢复请求不会补跑", async () => {
+    const { value, context, metadata } = await foregroundRuntime();
+    let finish!: (value: typeof emptyMetadata) => void;
+    metadata.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          finish = resolve;
+        })
+    );
+    const first = value.sync();
+    const rejected = expect(first).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(0);
+    resume();
+    await vi.advanceTimersByTimeAsync(800);
+    context.lifetime.abort();
+    finish(emptyMetadata);
+    await rejected;
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(metadata).toHaveBeenCalledTimes(1);
+    expect(context.store.has("shelf")).toBe(false);
+  });
   it("首次迁移补拉会话失效时，不把远端仍存在的书下架", async () => {
     await fake.excerpts.replace({ key: "A", title: "旧书" }, [
       { externalId: "A:bm1", quote: "已有划线" },

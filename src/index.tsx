@@ -9,6 +9,8 @@ import { WeReadRuntime } from "./runtime";
 import { WeReadView } from "./ui/WeReadView";
 import { WeReadBookView } from "./ui/WeReadBookView";
 import { WeReadSettings } from "./ui/WeReadSettings";
+import { MobileBook } from "./ui/mobile/MobileBook";
+import { MobileShelf } from "./ui/mobile/MobileShelf";
 
 declare const __PLUGIN_META__: { id: string; name: string; version: string };
 
@@ -25,6 +27,10 @@ export default definePlugin({
         </RuntimeProvider>
       );
 
+      // 手机另有一套为触控设计的书架与单书页；数据、同步与摘录口径两端共用
+      const mobile =
+        context.environment.platform === "android" || context.environment.platform === "ios";
+
       const settings = context.settings.register({
         id: "connection",
         title: "账号与连接",
@@ -35,34 +41,68 @@ export default definePlugin({
       pages.shelf = context.pages.register({
         id: "shelf",
         title: "微信读书",
-        component: () => wrap(<WeReadView onSettings={openSettings} />),
+        component: ({ pageContext }: PluginPageProps) =>
+          wrap(
+            mobile ? (
+              <MobileShelf pageContext={pageContext} onSettings={openSettings} />
+            ) : (
+              <WeReadView onSettings={openSettings} />
+            )
+          ),
       });
       pages.book = context.pages.register({
         id: "book",
         title: "微信读书",
         match: "params",
         getId: params => String(params.bookId),
-        component: ({ params }: PluginPageProps) =>
-          wrap(
-            <WeReadBookView
-              bookId={String(params.bookId)}
-              bookmark={typeof params.bookmark === "string" ? params.bookmark : undefined}
-            />
-          ),
+        component: ({ params, pageContext }: PluginPageProps) => {
+          const bookId = String(params.bookId);
+          const bookmark = typeof params.bookmark === "string" ? params.bookmark : undefined;
+          const bookmarkRequest =
+            typeof params.bookmarkRequest === "string" ? params.bookmarkRequest : undefined;
+          return wrap(
+            mobile ? (
+              <MobileBook
+                bookId={bookId}
+                bookmark={bookmark}
+                bookmarkRequest={bookmarkRequest}
+                pageContext={pageContext}
+              />
+            ) : (
+              <WeReadBookView
+                bookId={bookId}
+                bookmark={bookmark}
+                bookmarkRequest={bookmarkRequest}
+              />
+            )
+          );
+        },
       });
-      context.sidebar.registerItem({
-        id: "shelf",
-        title: "微信读书",
-        icon: BookOpen,
-        group: SIDEBAR_GROUPS.learning,
-        page: pages.shelf,
-      });
+      // 桌面挂侧边栏「学习」组；手机没有侧边栏，入口在「我的」功能宫格
+      if (mobile)
+        context.navigation.registerEntry({
+          id: "shelf",
+          title: "微信读书",
+          icon: BookOpen,
+          page: pages.shelf,
+        });
+      else
+        context.sidebar.registerItem({
+          id: "shelf",
+          title: "微信读书",
+          icon: BookOpen,
+          group: SIDEBAR_GROUPS.learning,
+          page: pages.shelf,
+        });
       // externalId = bookId:bookmarkId 或 bookId:review:reviewId；单书页以 bookmarkId / reviewId 标识每条
       context.excerpts.register({
         label: "微信读书",
         open: ({ sourceKey, externalId }) => {
           const bookmark = externalId.slice(sourceKey.length + 1).replace(/^review:/, "");
-          return pages.book.open({ bookId: sourceKey, ...(bookmark ? { bookmark } : {}) });
+          return pages.book.open({
+            bookId: sourceKey,
+            ...(bookmark ? { bookmark, bookmarkRequest: crypto.randomUUID() } : {}),
+          });
         },
       });
       context.commands.register({
