@@ -7,7 +7,6 @@ import {
   parseHighlights,
   parseMetadata,
   parseReviews,
-  getBookWebUrl,
 } from "./parser";
 import { WeReadNotLoggedInError, WeReadRateLimitError, WeReadSessionExpiredError } from "./errors";
 import type {
@@ -627,7 +626,6 @@ export class WeReadClient {
           author: detail.author ?? "",
           title: detail.title ?? "",
           url: undefined,
-          webUrl: getBookWebUrl(bookId, detail.title),
           cover: detail.cover ?? "",
           bookType: detail.type ?? 0,
           publishTime: detail.publishTime ?? "",
@@ -815,10 +813,6 @@ export class WeReadClient {
     };
   }
 
-  resolveBookWebLink(book: Pick<Metadata, "bookId" | "title" | "webUrl">): string | null {
-    return book.webUrl ?? getBookWebUrl(book.bookId, book.title);
-  }
-
   private async fetchNotebook(metaData: Metadata): Promise<Notebook> {
     const [detail, progress, highlights, reviews, chapters] = await Promise.all([
       this.getBookDetail(metaData.bookId),
@@ -868,7 +862,6 @@ export class WeReadClient {
         detail?.newRating && detail.newRating > 0
           ? (detail.newRating / 100).toFixed(1)
           : metaData.rating,
-      webUrl: metaData.webUrl ?? getBookWebUrl(metaData.bookId, detail?.title ?? metaData.title),
       lastReadDate,
       synckeys: {
         highlights: metaData.synckeys?.highlights ?? 0,
@@ -894,7 +887,6 @@ export class WeReadClient {
       author: book.author ?? "",
       title: book.title ?? "",
       url: undefined,
-      webUrl: getBookWebUrl(book.bookId, book.title),
       cover: book.cover ?? "",
       bookType: book.type ?? 0,
       publishTime: book.publishTime ?? "",

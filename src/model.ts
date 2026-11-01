@@ -3,6 +3,7 @@
  * 不依赖 React 与 IPC，可单测。
  */
 
+import { getBookWebUrl } from "./service/parser";
 import type { Metadata, Notebook, Review } from "./service/types";
 
 /* ───────── 书架 ───────── */
@@ -56,7 +57,7 @@ export function toBook(notebook: Notebook): WeReadBook {
     reviews: meta.reviewCount ?? 0,
     lastRead: meta.lastReadDate ?? "",
     status: resolveStatus(readInfo),
-    webUrl: meta.webUrl ?? meta.url ?? "",
+    webUrl: getBookWebUrl(meta.bookId),
   };
 }
 

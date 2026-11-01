@@ -22,7 +22,6 @@ export const parseMetadata = (noteBook: WeReadNotebookSummary): Metadata => {
     author: sanitizeAuthor(book.author),
     title: book.title,
     url: undefined,
-    webUrl: getBookWebUrl(noteBook.bookId, book.title),
     cover,
     publishTime: "",
     noteCount: noteBook.noteCount,
@@ -316,7 +315,8 @@ const extractRangeStart = (range?: string): number => {
   return Number.isNaN(parsed) ? Number.MAX_SAFE_INTEGER : parsed;
 };
 
-const getLegacyPcUrl = (bookId: string): string => {
+/** 书的网页阅读地址；/web/reader/* 在微信读书的通用链接名单里，已装 App 时系统直接交给 App，未装则在浏览器打开 */
+export const getBookWebUrl = (bookId: string): string => {
   const hash = md5(bookId);
   const [prefixFlag, segments] = getFa(bookId);
   let strSub = hash.substring(0, 3);
@@ -338,13 +338,6 @@ const getLegacyPcUrl = (bookId: string): string => {
 
   strSub += md5(strSub).substring(0, 3);
   return `https://weread.qq.com/web/reader/${strSub}`;
-};
-
-export const getBookWebUrl = (bookId: string, title?: string): string | null => {
-  if (title?.trim()) {
-    return `https://weread.qq.com/web/search/books?keyword=${encodeURIComponent(title.trim())}`;
-  }
-  return getLegacyPcUrl(bookId);
 };
 
 const getFa = (id: string): [string, string[]] => {

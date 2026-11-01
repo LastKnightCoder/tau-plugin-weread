@@ -14,6 +14,7 @@ import type {
 } from "@tau/plugins";
 import { WeReadClient, type NoteFingerprint } from "./service";
 import type { ChapterHighlightReview, Metadata, Notebook, Review } from "./service/types";
+import { getBookWebUrl } from "./service/parser";
 import { expandWeReadExcerpts } from "./excerpts";
 import { hasNotes, planNoteSync, preferNonEmpty, type ShelfLayout, type ShelfSort } from "./model";
 
@@ -81,14 +82,12 @@ const emptyNotes = { chapterHighlights: [], bookReview: { chapterReviews: [], bo
 /** 存储只收 JSON：去掉 undefined 字段 */
 const toJson = (value: unknown): JsonValue => JSON.parse(JSON.stringify(value)) as JsonValue;
 
-export const sourceOf = (meta: Pick<Metadata, "bookId" | "title" | "webUrl" | "url">) => {
-  const url = meta.webUrl || meta.url;
-  return {
+export const sourceOf = (meta: Pick<Metadata, "bookId" | "title">) =>
+  ({
     key: meta.bookId,
     title: meta.title ?? "",
-    ...(url && /^https?:\/\//.test(url) ? { url } : {}),
-  } satisfies PluginExcerptSource;
-};
+    url: getBookWebUrl(meta.bookId),
+  }) satisfies PluginExcerptSource;
 
 /** 新元数据并入缓存：去掉已不在书架与笔记本里的书 */
 function mergeMetadata(existing: Metadata[], metas: Metadata[], removed: Set<string>): Metadata[] {
@@ -497,7 +496,6 @@ export class WeReadRuntime {
         lastReadDate: "",
         noteCount: active.length - reviews.length,
         reviewCount: reviews.length,
-        webUrl: active.find(entry => entry.url)?.url,
       };
     }
     const cached = notebookFromEntries(meta, entries);

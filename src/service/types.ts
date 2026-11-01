@@ -214,7 +214,6 @@ export interface Metadata {
   author: string;
   title: string;
   url?: string;
-  webUrl?: string | null;
   cover: string;
   bookType: number;
   publishTime: string;

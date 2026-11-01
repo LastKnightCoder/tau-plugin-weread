@@ -9,6 +9,7 @@ import type {
 import { WeReadRuntime, notebookFromEntries } from "../src/runtime";
 import type { ChapterHighlightReview, Metadata } from "../src/service/types";
 import { WeReadSessionExpiredError } from "../src/service/errors";
+import { getBookWebUrl } from "../src/service/parser";
 
 /** 与宿主同语义的内存摘录：按 externalId 合并，缺席软删除，id 稳定 */
 const lifetimes: AbortController[] = [];
@@ -91,7 +92,6 @@ const meta = (bookId: string, extra: Partial<Metadata> = {}): Metadata => ({
   noteCount: 1,
   reviewCount: 0,
   lastReadDate: "",
-  webUrl: `https://weread.qq.com/web/reader/${bookId}`,
   ...extra,
 });
 
@@ -327,7 +327,7 @@ describe("WeReadRuntime", () => {
     vi.spyOn(runtime.client, "fetchNotes").mockResolvedValue(notes([chapter("bm1", "甲")]));
     expect(await runtime.sync()).toEqual({ total: 2, updated: 2, failed: 0 });
     expect(fake.excerpts.replace).toHaveBeenCalledWith(
-      { key: "A", title: "书A", url: "https://weread.qq.com/web/reader/A" },
+      { key: "A", title: "书A", url: getBookWebUrl("A") },
       [expect.objectContaining({ externalId: "A:bm1", quote: "甲", location: "第一章" })]
     );
     expect(runtime.getState().books.map(book => book.bookId)).toEqual(["A", "B"]);
