@@ -23,7 +23,7 @@ import type {
 } from "./types";
 
 const WEREAD_GATEWAY_URL = "https://i.weread.qq.com/api/agent/gateway";
-const SKILL_VERSION = "1.0.4";
+const SKILL_VERSION = "1.0.6";
 const METADATA_SYNC_CONCURRENCY = 3;
 const METADATA_SYNC_MAX_ATTEMPTS = 3;
 const METADATA_SYNC_BATCH_DELAY_MS = 500;
