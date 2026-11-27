@@ -4,6 +4,7 @@ import { BookOpen } from "lucide-react";
 import { definePlugin, SIDEBAR_GROUPS, type PluginPageProps } from "@tau/plugins";
 import { toast } from "@tau/ui";
 import "./styles.css";
+import { messages } from "./i18n";
 import { RuntimeProvider, type WeReadPages } from "./hooks";
 import { WeReadRuntime } from "./runtime";
 import { WeReadView } from "./ui/WeReadView";
@@ -16,8 +17,10 @@ declare const __PLUGIN_META__: { id: string; name: string; version: string };
 
 export default definePlugin({
   ...__PLUGIN_META__,
+  i18n: messages,
   create: () => ({
     activate(context) {
+      const t = context.i18n.t;
       const runtime = new WeReadRuntime(context);
       // 页面句柄在注册后才有，组件渲染时读取
       const pages = {} as WeReadPages;
@@ -33,14 +36,14 @@ export default definePlugin({
 
       const settings = context.settings.register({
         id: "connection",
-        title: "账号与连接",
-        description: "微信读书 API Key",
+        title: messages.ref("settings.title"),
+        description: t("settings.description"),
         component: () => wrap(<WeReadSettings />),
       });
       const openSettings = () => void settings.open();
       pages.shelf = context.pages.register({
         id: "shelf",
-        title: "微信读书",
+        title: messages.ref("page.title"),
         component: ({ pageContext }: PluginPageProps) =>
           wrap(
             mobile ? (
@@ -52,7 +55,7 @@ export default definePlugin({
       });
       pages.book = context.pages.register({
         id: "book",
-        title: "微信读书",
+        title: messages.ref("page.title"),
         match: "params",
         getId: params => String(params.bookId),
         component: ({ params, pageContext }: PluginPageProps) => {
@@ -82,21 +85,21 @@ export default definePlugin({
       if (mobile)
         context.navigation.registerEntry({
           id: "shelf",
-          title: "微信读书",
+          title: messages.ref("page.title"),
           icon: BookOpen,
           page: pages.shelf,
         });
       else
         context.sidebar.registerItem({
           id: "shelf",
-          title: "微信读书",
+          title: messages.ref("page.title"),
           icon: BookOpen,
           group: SIDEBAR_GROUPS.learning,
           page: pages.shelf,
         });
       // externalId = bookId:bookmarkId 或 bookId:review:reviewId；单书页以 bookmarkId / reviewId 标识每条
       context.excerpts.register({
-        label: "微信读书",
+        label: t("page.title"),
         open: ({ sourceKey, externalId }) => {
           const bookmark = externalId.slice(sourceKey.length + 1).replace(/^review:/, "");
           return pages.book.open({
@@ -107,7 +110,7 @@ export default definePlugin({
       });
       context.commands.register({
         id: "open",
-        title: "打开微信读书",
+        title: messages.ref("command.open"),
         run: async () => {
           await pages.shelf.open();
           return null;
@@ -115,11 +118,11 @@ export default definePlugin({
       });
       context.commands.register({
         id: "sync",
-        title: "同步微信读书书架",
+        title: messages.ref("command.sync"),
         run: async () => {
           const outcome = await runtime.sync();
-          if (!outcome) toast.error("请先连接微信读书");
-          else toast.success(`同步完成，共 ${outcome.total} 本书`);
+          if (!outcome) toast.error(t("sync.connectFirst"));
+          else toast.success(t("sync.done", { total: outcome.total }));
           return null;
         },
       });

@@ -14,7 +14,9 @@ import {
   resolveStatus,
   sortBooks,
   toBook,
+  type Translate,
 } from "../src/model";
+import zhCN from "../src/locales/zh-CN.json";
 
 const meta = (bookId: string, extra: Partial<Metadata> = {}): Metadata => ({
   bookId,
@@ -228,13 +230,20 @@ describe("笔记", () => {
 
 describe("格式", () => {
   const now = new Date(2026, 8, 26, 10);
+  // 回退词典直出的翻译：按 zh-CN 词典取句并替换插值
+  const zhT: Translate = (key, values) => {
+    let text = (zhCN as Record<string, string>)[key] ?? key;
+    for (const [name, value] of Object.entries(values ?? {}))
+      text = text.replaceAll(`{{${name}}}`, String(value));
+    return text;
+  };
   it("最近阅读日", () => {
-    expect(formatReadDay("2026-09-26", now)).toBe("今天");
-    expect(formatReadDay("2026-09-25", now)).toBe("昨天");
-    expect(formatReadDay("2026-09-22", now)).toBe("4 天前");
-    expect(formatReadDay("2026-03-04", now)).toBe("3/4");
-    expect(formatReadDay("2025-03-04", now)).toBe("2025/3/4");
-    expect(formatReadDay("", now)).toBe("—");
+    expect(formatReadDay("2026-09-26", zhT, now)).toBe("今天");
+    expect(formatReadDay("2026-09-25", zhT, now)).toBe("昨天");
+    expect(formatReadDay("2026-09-22", zhT, now)).toBe("4 天前");
+    expect(formatReadDay("2026-03-04", zhT, now)).toBe("3/4");
+    expect(formatReadDay("2025-03-04", zhT, now)).toBe("2025/3/4");
+    expect(formatReadDay("", zhT, now)).toBe("—");
   });
 });
 

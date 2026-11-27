@@ -15,8 +15,9 @@ import {
   Search,
   SearchX,
 } from "lucide-react";
-import type { PluginPageContext } from "@tau/plugins";
+import { useI18n, type PluginPageContext } from "@tau/plugins";
 import { Button, Input, Loading } from "@tau/ui";
+import { messages } from "../../i18n";
 import {
   SHELF_SORTS,
   STATUS_FILTERS,
@@ -40,6 +41,7 @@ export function MobileShelf({
   pageContext: PluginPageContext;
   onSettings(): void;
 }) {
+  const { t } = useI18n(messages);
   const shelf = useShelf();
   const {
     connection,
@@ -95,8 +97,8 @@ export function MobileShelf({
                     clearable
                     value={query}
                     onChange={e => setQuery(e.target.value)}
-                    placeholder="搜索书名或作者"
-                    aria-label="搜索书名或作者"
+                    placeholder={t("shelf.searchPlaceholder")}
+                    aria-label={t("mobile.searchPlaceholder")}
                     wrapperClassName="wr:min-w-0 wr:flex-1"
                   />
                   <button
@@ -107,30 +109,34 @@ export function MobileShelf({
                     }}
                     className="wr:text-accent-text wr:shrink-0 wr:px-1 wr:text-[14px] wr:font-medium"
                   >
-                    取消
+                    {t("mobile.cancel")}
                   </button>
                 </>
               ) : (
                 <>
                   <span className="wr:text-ink-2 wr:min-w-0 wr:flex-1 wr:truncate wr:text-[12.5px] wr:tabular-nums">
-                    <b className="wr:text-ink-1 wr:font-semibold">{books.length}</b> 本
+                    <b className="wr:text-ink-1 wr:font-semibold">{books.length}</b>{" "}
+                    {t("mobile.countSuffix", { count: books.length })}
                     {totalMinutes > 0 && (
                       <>
-                        <span className="wr:text-ink-3 wr:mx-1">·</span>累计{" "}
-                        <b className="wr:text-ink-1 wr:font-semibold">{formatMinutes(totalMinutes)}</b>
+                        <span className="wr:text-ink-3 wr:mx-1">·</span>
+                        {t("mobile.totalShort")}{" "}
+                        <b className="wr:text-ink-1 wr:font-semibold">
+                          {formatMinutes(totalMinutes, t)}
+                        </b>
                       </>
                     )}
                     <span className="wr:text-ink-3 wr:mx-1">·</span>
                     <span className="wr:text-ink-3">
-                      {syncing ? "正在同步" : formatSyncedAt(lastSyncedAt)}
+                      {syncing ? t("mobile.syncingShort") : formatSyncedAt(lastSyncedAt, t)}
                     </span>
                   </span>
-                  <TouchIcon label="搜索" onClick={() => setSearching(true)}>
+                  <TouchIcon label={t("mobile.search")} onClick={() => setSearching(true)}>
                     <Search size={19} strokeWidth={1.75} />
                   </TouchIcon>
                   {disconnected ? (
                     <Button variant="soft" size="sm" icon={KeyRound} onClick={onSettings}>
-                      {connection === "none" ? "连接" : "重新填写"}
+                      {connection === "none" ? t("mobile.connect") : t("mobile.refill")}
                     </Button>
                   ) : (
                     <Button
@@ -139,14 +145,18 @@ export function MobileShelf({
                       icon={RefreshCw}
                       className="wr:tabular-nums"
                       loading={syncing}
-                      loadingText={progress?.total ? `同步中 ${progress.completed}/${progress.total}` : "同步中…"}
+                      loadingText={
+                        progress?.total
+                          ? t("shelf.syncingProgress", { completed: progress.completed, total: progress.total })
+                          : t("shelf.syncing")
+                      }
                       disabled={connection !== "valid"}
                       onClick={() => sync()}
                     >
-                      同步
+                      {t("shelf.sync")}
                     </Button>
                   )}
-                  <TouchIcon label="同步与账号" onClick={() => setSyncOpen(true)}>
+                  <TouchIcon label={t("mobile.syncAccount")} onClick={() => setSyncOpen(true)}>
                     <Ellipsis size={19} strokeWidth={1.75} />
                   </TouchIcon>
                 </>
@@ -157,19 +167,17 @@ export function MobileShelf({
               <div className="wr:bg-warn-soft wr:mx-4 wr:mt-1 wr:flex wr:items-start wr:gap-2.5 wr:rounded-[14px] wr:px-3 wr:py-2.5 wr:text-[12.5px] wr:leading-[1.55]">
                 <KeyRound className="wr:text-warn wr:mt-px wr:size-4 wr:shrink-0" strokeWidth={1.75} />
                 <span className="wr:min-w-0 wr:flex-1">
-                  {connection === "invalid"
-                    ? "API Key 已失效，显示的是上次同步的本地缓存，不能拉取新笔记。"
-                    : "尚未连接微信读书，显示的是本地缓存。"}
+                  {connection === "invalid" ? t("mobile.invalidCache") : t("mobile.noneCache")}
                 </span>
                 <button type="button" onClick={onSettings} className="wr:text-accent-text wr:shrink-0 wr:font-semibold">
-                  {connection === "invalid" ? "重新填写" : "去连接"}
+                  {connection === "invalid" ? t("mobile.refill") : t("mobile.goConnect")}
                 </button>
               </div>
             )}
 
             <div className="wr:bg-page wr:sticky wr:top-0 wr:z-[2] wr:flex wr:items-center wr:gap-1 wr:py-1.5 wr:pl-4 wr:pr-2">
               <div className="wr:flex wr:w-0 wr:flex-1 wr:gap-1.5 wr:overflow-x-auto wr:py-1 wr:pr-6 wr:[mask-image:linear-gradient(90deg,#000_calc(100%-26px),transparent)] wr:[scrollbar-width:none]">
-                <Pill active={!activeArchive} onClick={() => setArchive("")} label="全部" count={books.length} />
+                <Pill active={!activeArchive} onClick={() => setArchive("")} label={t("filter.all")} count={books.length} />
                 {archives.map(a => (
                   <Pill
                     key={a.name}
@@ -180,14 +188,14 @@ export function MobileShelf({
                   />
                 ))}
               </div>
-              <TouchIcon label="筛选与排列" on={customized} dot={customized} onClick={() => setFilterOpen(true)}>
+              <TouchIcon label={t("mobile.filterSort")} on={customized} dot={customized} onClick={() => setFilterOpen(true)}>
                 <ListFilter size={19} strokeWidth={1.75} />
               </TouchIcon>
             </div>
 
             {!filtering && reading.length > 0 && (
               <>
-                <Section title="在读" hint={activeArchive || "最近读过的书"} />
+                <Section title={t("section.reading")} hint={activeArchive || t("section.readingHint")} />
                 <div className="wr:bg-surface wr:shadow-card wr:mx-4 wr:rounded-[18px] wr:px-3.5 wr:py-0.5">
                   {reading.map(book => (
                     <ReadingRow key={book.id} book={book} onOpen={() => open(book)} />
@@ -196,13 +204,16 @@ export function MobileShelf({
               </>
             )}
 
-            <Section title={status === "all" ? "全部" : statusLabel} hint={`${visible.length} 本 · 按${sortLabel}`} />
+            <Section
+              title={status === "all" ? t("section.all") : statusLabel}
+              hint={t("section.countHint", { count: visible.length, sort: sortLabel })}
+            />
             {visible.length === 0 ? (
               <div className="wr:flex wr:flex-col wr:items-center wr:gap-2 wr:py-12 wr:text-center">
                 <SearchX className="wr:text-ink-3 wr:size-6" strokeWidth={1.5} />
-                <p className="wr:text-tau-meta wr:text-ink-2">没有符合条件的书</p>
+                <p className="wr:text-tau-meta wr:text-ink-2">{t("shelf.noMatch")}</p>
                 <Button variant="secondary" size="sm" className="wr:mt-1" onClick={shelf.clearFilters}>
-                  清除筛选
+                  {t("shelf.clearFilters")}
                 </Button>
               </div>
             ) : layout === "list" ? (
@@ -237,6 +248,7 @@ export function MobileShelf({
 
 /** 「在读」一行：缩略封面 · 书名 / 作者与最近阅读 · 进度 */
 function ReadingRow({ book, onOpen }: { book: WeReadBook; onOpen(): void }) {
+  const { t } = useI18n(messages);
   return (
     <button
       type="button"
@@ -248,7 +260,7 @@ function ReadingRow({ book, onOpen }: { book: WeReadBook; onOpen(): void }) {
         <span className="wr:truncate wr:text-[14px] wr:font-semibold">{book.title}</span>
         <span className="wr:text-ink-3 wr:truncate wr:text-[11.5px]">
           {book.author}
-          {book.lastRead && ` · ${formatReadDay(book.lastRead)}`}
+          {book.lastRead && ` · ${formatReadDay(book.lastRead, t)}`}
         </span>
       </span>
       <span className="wr:flex wr:w-16 wr:shrink-0 wr:flex-col wr:items-end wr:gap-1.5 wr:text-[12px] wr:font-semibold wr:tabular-nums">
@@ -261,6 +273,7 @@ function ReadingRow({ book, onOpen }: { book: WeReadBook; onOpen(): void }) {
 
 /** 列表排布一行：缩略封面 · 书名 / 作者与最近阅读 · 进度与划线数 */
 function ListRow({ book, onOpen }: { book: WeReadBook; onOpen(): void }) {
+  const { t } = useI18n(messages);
   return (
     <button
       type="button"
@@ -272,20 +285,20 @@ function ListRow({ book, onOpen }: { book: WeReadBook; onOpen(): void }) {
         <span className="wr:truncate wr:text-[14px] wr:font-semibold">{book.title}</span>
         <span className="wr:text-ink-3 wr:truncate wr:text-[11.5px]">
           {book.author}
-          {book.lastRead && ` · ${formatReadDay(book.lastRead)}`}
+          {book.lastRead && ` · ${formatReadDay(book.lastRead, t)}`}
         </span>
       </span>
       <span className="wr:text-ink-2 wr:flex wr:w-[84px] wr:shrink-0 wr:flex-col wr:items-end wr:gap-1.5 wr:text-[11.5px] wr:tabular-nums">
         {book.status === "unread" ? (
-          <span className="wr:text-ink-3">未开始</span>
+          <span className="wr:text-ink-3">{t("filter.unread")}</span>
         ) : (
           <>
             <span>
-              {book.status === "finished" ? "读完" : `${book.progress}%`}
+              {book.status === "finished" ? t("filter.finished") : `${book.progress}%`}
               {book.notes > 0 && (
                 <>
                   {" · "}
-                  <b className="wr:text-ink-1 wr:font-semibold">{book.notes}</b> 划线
+                  {t("mobile.notesCount", { count: book.notes })}
                 </>
               )}
             </span>
@@ -307,28 +320,29 @@ function FilterSheet({
   onClose(): void;
   shelf: ReturnType<typeof useShelf>;
 }) {
+  const { t } = useI18n(messages);
   return (
-    <Sheet open={open} onClose={onClose} title="筛选与排列">
-      <SheetGroup>状态</SheetGroup>
+    <Sheet open={open} onClose={onClose} title={t("mobile.filterSort")}>
+      <SheetGroup>{t("mobile.sheet.status")}</SheetGroup>
       <div className="wr:flex wr:flex-wrap wr:gap-2 wr:px-[18px] wr:pb-3 wr:pt-1">
         {STATUS_FILTERS.map(f => (
-          <Pill key={f.value} active={shelf.status === f.value} onClick={() => shelf.setStatus(f.value)} label={f.label} />
+          <Pill key={f.value} active={shelf.status === f.value} onClick={() => shelf.setStatus(f.value)} label={t(f.key)} />
         ))}
       </div>
-      <SheetGroup>排序</SheetGroup>
+      <SheetGroup>{t("mobile.sheet.sort")}</SheetGroup>
       {SHELF_SORTS.map(s => (
-        <SheetRow key={s.value} label={s.label} checked={shelf.sort === s.value} onClick={() => shelf.setSort(s.value)} />
+        <SheetRow key={s.value} label={t(s.key)} checked={shelf.sort === s.value} onClick={() => shelf.setSort(s.value)} />
       ))}
-      <SheetGroup>排布</SheetGroup>
+      <SheetGroup>{t("mobile.sheet.layout")}</SheetGroup>
       <SheetRow
         icon={<LayoutGrid size={19} strokeWidth={1.75} />}
-        label="封面"
+        label={t("layout.cover")}
         checked={shelf.layout === "cover"}
         onClick={() => shelf.setLayout("cover")}
       />
       <SheetRow
         icon={<List size={19} strokeWidth={1.75} />}
-        label="列表"
+        label={t("layout.list")}
         checked={shelf.layout === "list"}
         onClick={() => shelf.setLayout("list")}
       />
@@ -348,25 +362,26 @@ function SyncSheet({
   shelf: ReturnType<typeof useShelf>;
   onSettings(): void;
 }) {
+  const { t } = useI18n(messages);
   const outcome = useWeReadState(state => state.lastOutcome);
   const { connection, syncing, progress, lastSyncedAt, books } = shelf;
   const summary = syncing
     ? progress?.total
-      ? `正在同步 ${progress.completed} / ${progress.total}`
-      : "正在同步…"
+      ? t("shelf.syncingProgress", { completed: progress.completed, total: progress.total })
+      : t("shelf.syncing")
     : [
-        formatSyncedAt(lastSyncedAt),
-        outcome && `更新 ${outcome.updated} 本`,
-        outcome?.failed && `${outcome.failed} 本下次重试`,
+        formatSyncedAt(lastSyncedAt, t),
+        outcome && t("mobile.updated", { count: outcome.updated }),
+        outcome?.failed && t("mobile.retry", { count: outcome.failed }),
       ]
         .filter(Boolean)
         .join(" · ");
   return (
-    <Sheet open={open} onClose={onClose} title="同步" subtitle={summary}>
+    <Sheet open={open} onClose={onClose} title={t("mobile.sheet.sync")} subtitle={summary}>
       <SheetRow
         icon={<RefreshCw size={19} strokeWidth={1.75} />}
-        label="全量重新同步"
-        hint={`把整个书架重新拉一遍，约 ${books.length * 2} 个请求，书多时较慢；同步期间尽量不要切到后台。`}
+        label={t("shelf.syncFull")}
+        hint={t("mobile.syncFullHint", { count: books.length * 2 })}
         disabled={connection !== "valid" || syncing}
         onClick={() => {
           onClose();
@@ -375,13 +390,13 @@ function SyncSheet({
       />
       <SheetRow
         icon={<KeyRound size={19} strokeWidth={1.75} />}
-        label="账号与连接"
+        label={t("mobile.accountTitle")}
         hint={
           connection === "valid"
-            ? "已连接 · 更换或断开 API Key"
+            ? t("mobile.account.valid")
             : connection === "invalid"
-              ? "API Key 已失效，重新填写"
-              : "尚未连接"
+              ? t("mobile.account.invalid")
+              : t("mobile.account.none")
         }
         onClick={onSettings}
       />

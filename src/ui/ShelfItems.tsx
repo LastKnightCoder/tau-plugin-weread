@@ -1,11 +1,14 @@
 /** 书架条目：「在读」续读卡、封面格、列表排布（行式，点列头排序） */
 
 import { ArrowDown } from "lucide-react";
+import { useI18n } from "@tau/plugins";
 import { cn } from "@tau/ui";
+import { messages } from "../i18n";
 import { formatMinutes, formatReadDay, type ShelfSort, type WeReadBook } from "../model";
 import { BookCover, ProgressBar, StatusDot } from "./bits";
 
 export function ReadingCard({ book, onOpen }: { book: WeReadBook; onOpen(): void }) {
+  const { t } = useI18n(messages);
   return (
     <button
       type="button"
@@ -17,9 +20,12 @@ export function ReadingCard({ book, onOpen }: { book: WeReadBook; onOpen(): void
         <span className="wr:truncate wr:text-[14px] wr:font-semibold">{book.title}</span>
         <span className="wr:text-tau-sm wr:text-ink-3 wr:truncate">{book.author}</span>
         <span className="wr:text-tau-sm wr:text-ink-2 wr:mt-1 wr:truncate wr:tabular-nums">
-          最近阅读 {formatReadDay(book.lastRead)}
+          {t("notes.lastReadLabel")} {formatReadDay(book.lastRead, t)}
           {book.minutes > 0 && (
-            <span className="wr:text-ink-3"> · 累计 {formatMinutes(book.minutes)}</span>
+            <span className="wr:text-ink-3">
+              {" · "}
+              {t("mobile.totalShort")} {formatMinutes(book.minutes, t)}
+            </span>
           )}
         </span>
         <span className="wr:text-tau-micro wr:text-ink-3 wr:mt-auto wr:flex wr:items-center wr:gap-2 wr:tabular-nums">
@@ -32,6 +38,7 @@ export function ReadingCard({ book, onOpen }: { book: WeReadBook; onOpen(): void
 }
 
 export function CoverTile({ book, onOpen }: { book: WeReadBook; onOpen(): void }) {
+  const { t } = useI18n(messages);
   return (
     <button
       type="button"
@@ -57,12 +64,12 @@ export function CoverTile({ book, onOpen }: { book: WeReadBook; onOpen(): void }
       </span>
       <span className="wr:text-tau-micro wr:text-ink-3 wr:mt-0.5 wr:flex wr:gap-2 wr:tabular-nums">
         {book.status === "finished" ? (
-          <span className="wr:text-ok">读完</span>
+          <span className="wr:text-ok">{t("filter.finished")}</span>
         ) : book.status === "reading" ? (
           <span>{book.progress}%</span>
         ) : null}
         {book.notes > 0 ? (
-          <span>{book.notes} 划线</span>
+          <span>{t("list.highlights", { count: book.notes })}</span>
         ) : (
           <span className="wr:truncate">{book.author}</span>
         )}
@@ -74,11 +81,11 @@ export function CoverTile({ book, onOpen }: { book: WeReadBook; onOpen(): void }
 const LIST_COLS =
   "wr:grid wr:grid-cols-[minmax(220px,2.4fr)_minmax(80px,1fr)_72px_minmax(120px,1.2fr)_96px_minmax(96px,1fr)_76px] wr:items-center wr:gap-4";
 
-const SORTABLE: { key: ShelfSort; label: string }[] = [
-  { key: "progress", label: "进度" },
-  { key: "minutes", label: "阅读时长" },
-  { key: "notes", label: "笔记" },
-  { key: "last", label: "最近阅读" },
+const SORTABLE: { key: ShelfSort; key2: "list.header.progress" | "list.header.minutes" | "list.header.notes" | "list.header.last" }[] = [
+  { key: "progress", key2: "list.header.progress" },
+  { key: "minutes", key2: "list.header.minutes" },
+  { key: "notes", key2: "list.header.notes" },
+  { key: "last", key2: "list.header.last" },
 ];
 
 export function ShelfList({
@@ -92,6 +99,7 @@ export function ShelfList({
   onSort(sort: ShelfSort): void;
   onOpen(book: WeReadBook): void;
 }) {
+  const { t } = useI18n(messages);
   const head = (key: ShelfSort, label: string) => (
     <button
       key={key}
@@ -109,10 +117,10 @@ export function ShelfList({
   return (
     <div className="wr:-mx-3">
       <div className={cn(LIST_COLS, "wr:text-tau-sm wr:text-ink-3 wr:px-3 wr:py-2")}>
-        <span>书名 / 作者</span>
-        <span>分类</span>
-        <span>状态</span>
-        {SORTABLE.map(({ key, label }) => head(key, label))}
+        <span>{t("list.header.title")}</span>
+        <span>{t("list.header.archive")}</span>
+        <span>{t("list.header.status")}</span>
+        {SORTABLE.map(({ key, key2 }) => head(key, t(key2)))}
       </div>
       {books.map(book => (
         <button
@@ -144,15 +152,15 @@ export function ShelfList({
             <span className="wr:w-8 wr:text-right">{book.progress}%</span>
           </span>
           <span className="wr:text-tau-sm wr:text-ink-2 wr:tabular-nums">
-            {book.minutes ? formatMinutes(book.minutes) : "—"}
+            {book.minutes ? formatMinutes(book.minutes, t) : "—"}
           </span>
           <span className="wr:text-tau-sm wr:text-ink-2 wr:truncate wr:tabular-nums">
             {book.notes + book.reviews > 0
-              ? `${book.notes} 划线${book.reviews ? ` · ${book.reviews} 想法` : ""}`
+              ? `${t("list.highlights", { count: book.notes })}${book.reviews ? ` · ${t("list.reviews", { count: book.reviews })}` : ""}`
               : "—"}
           </span>
           <span className="wr:text-tau-sm wr:text-ink-2 wr:tabular-nums">
-            {formatReadDay(book.lastRead)}
+            {formatReadDay(book.lastRead, t)}
           </span>
         </button>
       ))}

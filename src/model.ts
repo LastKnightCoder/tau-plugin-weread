@@ -5,6 +5,11 @@
 
 import { getBookWebUrl } from "./service/parser";
 import type { Metadata, Notebook, Review } from "./service/types";
+import { messages } from "./i18n";
+
+/** 词典 key；组件内由 useI18n 提供翻译，非 React 模块用 context.i18n */
+export type MessageKey = Parameters<typeof messages.ref>[0];
+export type Translate = (key: MessageKey, values?: Record<string, string | number | boolean>) => string;
 
 /* ───────── 书架 ───────── */
 
@@ -65,26 +70,32 @@ export type ShelfStatusFilter = "all" | "reading" | "finished" | "unread" | "not
 export type ShelfSort = "last" | "progress" | "minutes" | "notes";
 export type ShelfLayout = "cover" | "list";
 
-export const STATUS_FILTERS: { value: ShelfStatusFilter; label: string }[] = [
-  { value: "all", label: "全部状态" },
-  { value: "reading", label: "在读" },
-  { value: "finished", label: "读完" },
-  { value: "unread", label: "未开始" },
-  { value: "notes", label: "有笔记" },
+export const STATUS_FILTERS: { value: ShelfStatusFilter; key: MessageKey }[] = [
+  { value: "all", key: "filter.allStatus" },
+  { value: "reading", key: "filter.reading" },
+  { value: "finished", key: "filter.finished" },
+  { value: "unread", key: "filter.unread" },
+  { value: "notes", key: "filter.notes" },
 ];
 
-export const SHELF_SORTS: { value: ShelfSort; label: string }[] = [
-  { value: "last", label: "最近阅读" },
-  { value: "progress", label: "阅读进度" },
-  { value: "minutes", label: "阅读时长" },
-  { value: "notes", label: "笔记数" },
+export const SHELF_SORTS: { value: ShelfSort; key: MessageKey }[] = [
+  { value: "last", key: "sort.last" },
+  { value: "progress", key: "sort.progress" },
+  { value: "minutes", key: "sort.minutes" },
+  { value: "notes", key: "sort.notes" },
 ];
 
-export const STATUS_LABEL: Record<ReadingStatus, string> = {
-  reading: "在读",
-  finished: "读完",
-  unread: "未开始",
+export const STATUS_LABEL: Record<ReadingStatus, MessageKey> = {
+  reading: "filter.reading",
+  finished: "filter.finished",
+  unread: "filter.unread",
 };
+
+export const statusLabel = (t: Translate, status: ReadingStatus) => t(STATUS_LABEL[status]);
+export const filterLabel = (t: Translate, value: ShelfStatusFilter) =>
+  t(STATUS_FILTERS.find(f => f.value === value)?.key ?? "filter.all");
+export const sortLabel = (t: Translate, value: ShelfSort) =>
+  t(SHELF_SORTS.find(s => s.value === value)?.key ?? "sort.last");
 
 /** 分类 chips：按书数降序，同数按名称 */
 export function rankArchives(books: WeReadBook[]): { name: string; count: number }[] {
@@ -138,12 +149,12 @@ export type HighlightStyle = 0 | 1 | 2;
 /** 微信读书 colorStyle：1 红 / 2 紫 / 3 蓝 / 4 绿 / 5 黄 */
 export type HighlightColor = 1 | 2 | 3 | 4 | 5;
 
-export const HIGHLIGHT_COLORS: { value: HighlightColor; label: string }[] = [
-  { value: 1, label: "红" },
-  { value: 2, label: "紫" },
-  { value: 3, label: "蓝" },
-  { value: 4, label: "绿" },
-  { value: 5, label: "黄" },
+export const HIGHLIGHT_COLORS: { value: HighlightColor; key: MessageKey }[] = [
+  { value: 1, key: "color.red" },
+  { value: 2, key: "color.purple" },
+  { value: 3, key: "color.blue" },
+  { value: 4, key: "color.green" },
+  { value: 5, key: "color.yellow" },
 ];
 
 export interface BookNote {
@@ -341,35 +352,35 @@ export function notesToMarkdown(book: WeReadBook, notes: BookNotes): string {
 
 /* ───────── 格式 ───────── */
 
-export function formatMinutes(minutes: number): string {
-  if (minutes < 60) return `${minutes} 分钟`;
+export function formatMinutes(minutes: number, t: Translate): string {
+  if (minutes < 60) return t("duration.minutes", { count: minutes });
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m ? `${h} 小时 ${m} 分` : `${h} 小时`;
+  return m ? t("duration.hoursMinutes", { hours: h, minutes: m }) : t("duration.hours", { count: h });
 }
 
 /** 最近阅读日：今天 / 昨天 / N 天前 / 当年 M/D / 往年 YYYY/M/D */
-export function formatReadDay(day: string, now = new Date()): string {
+export function formatReadDay(day: string, t: Translate, now = new Date()): string {
   if (!day) return "—";
   const [y, m, d] = day.split("-").map(Number);
   if (!y || !m || !d) return day;
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diff = Math.round((today.getTime() - new Date(y, m - 1, d).getTime()) / 86_400_000);
-  if (diff <= 0) return "今天";
-  if (diff === 1) return "昨天";
-  if (diff < 7) return `${diff} 天前`;
+  if (diff <= 0) return t("date.today");
+  if (diff === 1) return t("date.yesterday");
+  if (diff < 7) return t("date.daysAgo", { count: diff });
   return y === now.getFullYear() ? `${m}/${d}` : `${y}/${m}/${d}`;
 }
 
-export function formatSyncedAt(ts: number | null, now = Date.now()): string {
-  if (!ts) return "尚未同步";
+export function formatSyncedAt(ts: number | null, t: Translate, now = Date.now()): string {
+  if (!ts) return t("sync.never");
   const min = Math.floor((now - ts) / 60_000);
-  if (min < 1) return "刚刚同步";
-  if (min < 60) return `${min} 分钟前同步`;
+  if (min < 1) return t("sync.justNow");
+  if (min < 60) return t("sync.minutesAgo", { count: min });
   const hours = Math.floor(min / 60);
-  if (hours < 24) return `${hours} 小时前同步`;
+  if (hours < 24) return t("sync.hoursAgo", { count: hours });
   const date = new Date(ts);
-  return `${date.getMonth() + 1}/${date.getDate()} 同步`;
+  return t("sync.onDate", { month: date.getMonth() + 1, day: date.getDate() });
 }
 
 /** 无封面时的兜底色（按书 id 派生，同一本永远同一色） */

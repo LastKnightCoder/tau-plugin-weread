@@ -1,8 +1,10 @@
 /** 微信读书域的小件：封面、进度条、状态点 */
 
 import { useState, type ReactNode } from "react";
+import { useI18n } from "@tau/plugins";
 import { cn } from "@tau/ui";
 import { STATUS_LABEL, coverTone, type ReadingStatus, type WeReadBook } from "../model";
+import { messages } from "../i18n";
 import { SERIF } from "./styles";
 
 const TONE_BG = {
@@ -94,10 +96,11 @@ const STATUS_DOT: Record<ReadingStatus, string> = {
 };
 
 export function StatusDot({ status }: { status: ReadingStatus }) {
+  const { t } = useI18n(messages);
   return (
     <span className="wr:text-tau-sm wr:text-ink-2 wr:inline-flex wr:items-center wr:gap-1.5 wr:whitespace-nowrap">
       <span className={cn("wr:size-1.5 wr:rounded-full", STATUS_DOT[status])} />
-      {STATUS_LABEL[status]}
+      {t(STATUS_LABEL[status])}
     </span>
   );
 }

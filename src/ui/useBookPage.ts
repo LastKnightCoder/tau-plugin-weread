@@ -5,7 +5,9 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useI18n } from "@tau/plugins";
 import { toast } from "@tau/ui";
+import { messages } from "../i18n";
 import {
   buildBookNotes,
   countNotes,
@@ -34,6 +36,7 @@ export function useBookPage({
   anchorTop(): number;
 }) {
   const { runtime, pages } = useWeRead();
+  const { t } = useI18n(messages);
   const connected = useWeReadState(state => state.connection === "valid");
   const { detail, loading, refreshing, refresh } = useBookDetail(bookId);
 
@@ -114,7 +117,7 @@ export function useBookPage({
           await runAction(note, "card");
         } catch (error) {
           if (!runtime.context.signal.aborted)
-            toast.error(error instanceof Error ? error.message : String(error) || "转为卡片失败");
+            toast.error(error instanceof Error ? error.message : String(error) || t("notes.toCardFailed"));
         } finally {
           running.current = false;
         }
@@ -134,16 +137,16 @@ export function useBookPage({
 
   const empty = !notes || (notes.chapters.length === 0 && notes.bookReviews.length === 0);
   const status = detail?.error
-    ? `拉取失败，显示的是本地缓存：${detail.error}`
+    ? t("notes.status.fetchFailed", { reason: detail.error })
     : !connected
-      ? "未连接微信读书，显示的是本地缓存"
+      ? t("notes.status.notConnected")
       : null;
   const copyMarkdown =
     book && notes && !empty
       ? () =>
           void window.navigator.clipboard
             .writeText(notesToMarkdown(book, notes))
-            .then(() => toast.success("已复制为 Markdown"))
+            .then(() => toast.success(t("notes.copiedMarkdown")))
       : undefined;
 
   return {

@@ -9,7 +9,9 @@ import {
   PenLine,
   RefreshCw,
 } from "lucide-react";
+import { useI18n } from "@tau/plugins";
 import { Button, FilterPill, IconButton, Tooltip, cn, toast } from "@tau/ui";
+import { messages } from "../i18n";
 import {
   HIGHLIGHT_COLORS,
   formatMinutes,
@@ -22,10 +24,11 @@ import {
 } from "../model";
 import { BookCover, ProgressBar } from "./bits";
 import { HIGHLIGHT_DOT, SERIF, markClass } from "./styles";
+import type { Translate } from "../model";
 
-async function copy(text: string) {
+async function copy(text: string, t: Translate) {
   await navigator.clipboard.writeText(text);
-  toast.success("已复制");
+  toast.success(t("notes.copied"));
 }
 
 /** 书头的信息部分：封面、书名、作者 · 出版社、进度、阅读与笔记统计；操作按钮由调用方放在 children */
@@ -41,6 +44,7 @@ export function BookInfo({
   compact?: boolean;
   children?: ReactNode;
 }) {
+  const { t } = useI18n(messages);
   return (
     <header className={cn("wr:flex wr:items-start", compact ? "wr:gap-3.5" : "wr:gap-5")}>
       <BookCover
@@ -63,24 +67,27 @@ export function BookInfo({
         </p>
         <div className="wr:text-tau-micro wr:text-ink-3 wr:mt-2.5 wr:flex wr:max-w-[320px] wr:items-center wr:gap-2 wr:tabular-nums">
           <ProgressBar book={book} className="wr:flex-1" />
-          {book.status === "finished" ? "读完" : `${book.progress}%`}
+          {book.status === "finished" ? t("filter.finished") : `${book.progress}%`}
         </div>
         <p className="wr:text-tau-sm wr:text-ink-3 wr:mt-2 wr:flex wr:flex-wrap wr:gap-x-3.5 wr:gap-y-1 wr:tabular-nums">
           {book.minutes > 0 && (
             <span>
-              阅读 <b className="wr:text-ink-1 wr:font-medium">{formatMinutes(book.minutes)}</b>
+              {t("notes.readingLabel")}{" "}
+              <b className="wr:text-ink-1 wr:font-medium">{formatMinutes(book.minutes, t)}</b>
             </span>
           )}
           <span>
-            划线 <b className="wr:text-ink-1 wr:font-medium">{counts.highlights}</b>
+            {t("notes.highlightLabel")}{" "}
+            <b className="wr:text-ink-1 wr:font-medium">{counts.highlights}</b>
           </span>
           <span>
-            想法 <b className="wr:text-ink-1 wr:font-medium">{counts.reviews}</b>
+            {t("notes.reviewLabel")}{" "}
+            <b className="wr:text-ink-1 wr:font-medium">{counts.reviews}</b>
           </span>
           {book.lastRead && (
             <span>
-              最近阅读{" "}
-              <b className="wr:text-ink-1 wr:font-medium">{formatReadDay(book.lastRead)}</b>
+              {t("notes.lastReadLabel")}{" "}
+              <b className="wr:text-ink-1 wr:font-medium">{formatReadDay(book.lastRead, t)}</b>
             </span>
           )}
         </p>
@@ -107,12 +114,13 @@ export function BookHeader({
   onRefresh(): void;
   onCopyMarkdown?: () => void;
 }) {
+  const { t } = useI18n(messages);
   return (
     <BookInfo book={book} counts={counts}>
       <div className="wr:-ml-2 wr:mt-3 wr:flex wr:flex-wrap wr:gap-1">
         {onOpenWeb && (
           <Button variant="ghost" size="sm" icon={BookOpen} onClick={onOpenWeb}>
-            在微信读书中打开
+            {t("notes.openInWeRead")}
           </Button>
         )}
         <Button
@@ -120,16 +128,16 @@ export function BookHeader({
           size="sm"
           icon={RefreshCw}
           loading={refreshing}
-          loadingText="拉取中…"
+          loadingText={t("notes.fetching")}
           disabled={!connected}
-          title={connected ? undefined : "连接微信读书后才能拉取"}
+          title={connected ? undefined : t("notes.refreshRequired")}
           onClick={onRefresh}
         >
-          重新拉取笔记
+          {t("notes.refresh")}
         </Button>
         {onCopyMarkdown && (
           <Button variant="ghost" size="sm" icon={Copy} onClick={onCopyMarkdown}>
-            复制为 Markdown
+            {t("notes.copyMarkdown")}
           </Button>
         )}
       </div>
@@ -138,6 +146,7 @@ export function BookHeader({
 }
 
 export function BookReviews({ reviews }: { reviews: { id: string; paragraphs: string[] }[] }) {
+  const { t } = useI18n(messages);
   if (!reviews.length) return null;
   return (
     <div className="wr:bg-accent-soft wr:mt-5 wr:flex wr:flex-col wr:gap-3 wr:rounded-[var(--tau-radius-md)] wr:px-4 wr:py-3.5">
@@ -145,7 +154,7 @@ export function BookReviews({ reviews }: { reviews: { id: string; paragraphs: st
         <div key={review.id}>
           <p className="wr:text-tau-sm wr:text-accent-text wr:mb-1 wr:flex wr:items-center wr:gap-1.5 wr:font-medium">
             <PenLine className="wr:size-3.5" strokeWidth={1.75} />
-            我的书评
+            {t("notes.myReviews")}
           </p>
           {review.paragraphs.map((p, i) => (
             <p key={i} className="wr:text-tau-body-lg wr:leading-[1.85]">
@@ -168,22 +177,23 @@ export function NoteFilterBar({
   colors: HighlightColor[];
   onChange(filter: NoteFilter): void;
 }) {
+  const { t } = useI18n(messages);
   return (
     <div className="wr:bg-surface wr:sticky wr:top-0 wr:z-[2] wr:-mx-1 wr:mt-5 wr:flex wr:items-center wr:gap-1.5 wr:px-1 wr:py-2.5">
-      <FilterPill active={filter === "all"} onClick={() => onChange("all")} label="全部" />
+      <FilterPill active={filter === "all"} onClick={() => onChange("all")} label={t("filter.all")} />
       <FilterPill
         active={filter === "review"}
         onClick={() => onChange(filter === "review" ? "all" : "review")}
-        label="有想法"
+        label={t("notes.filter.review")}
       />
       {colors.length > 1 && <span className="wr:w-1.5" />}
       {colors.length > 1 &&
         HIGHLIGHT_COLORS.filter(c => colors.includes(c.value)).map(c => (
-          <Tooltip key={c.value} content={`${c.label}色划线`}>
+          <Tooltip key={c.value} content={t("notes.colorHighlight", { color: t(c.key) })}>
             <button
               type="button"
               aria-pressed={filter === c.value}
-              aria-label={`${c.label}色划线`}
+              aria-label={t("notes.colorHighlight", { color: t(c.key) })}
               onClick={() => onChange(filter === c.value ? "all" : c.value)}
               className={cn(
                 "wr:hover:bg-hover wr:grid wr:size-6 wr:place-items-center wr:rounded-full wr:outline-none wr:focus-visible:shadow-[var(--tau-focus-ring)]",
@@ -260,6 +270,7 @@ function NoteItem({
   onToCard?: (note: BookNote) => void;
   onPress?: (note: BookNote) => void;
 }) {
+  const { t } = useI18n(messages);
   if (onPress)
     return (
       <div
@@ -286,7 +297,7 @@ function NoteItem({
       <div className="wr:absolute wr:right-1.5 wr:top-1.5 wr:flex wr:gap-1 wr:opacity-0 wr:transition-opacity wr:duration-150 wr:focus-within:opacity-100 wr:group-hover:opacity-100">
         {onToCard && note.paragraphs.length > 0 && (
           <IconButton
-            title="转为卡片"
+            title={t("notes.toCard")}
             onClick={() => onToCard(note)}
             className="wr:bg-surface wr:enabled:hover:bg-surface-hover wr:shadow-lift wr:size-[26px] wr:rounded-[8px]"
           >
@@ -294,8 +305,8 @@ function NoteItem({
           </IconButton>
         )}
         <IconButton
-          title="复制"
-          onClick={() => void copy(noteText(note))}
+          title={t("notes.copy")}
+          onClick={() => void copy(noteText(note), t)}
           className="wr:bg-surface wr:enabled:hover:bg-surface-hover wr:shadow-lift wr:size-[26px] wr:rounded-[8px]"
         >
           <Copy className="wr:size-[13px]" strokeWidth={1.75} />
@@ -317,6 +328,7 @@ export function ChapterSection({
   /** 手机：点一条划线出操作面板（不显示悬停按钮） */
   onPress?: (note: BookNote) => void;
 }) {
+  const { t } = useI18n(messages);
   const count = chapter.notes.length + chapter.thoughts.length;
   return (
     <section
@@ -352,11 +364,12 @@ export function NoteToc({
   active: string | null;
   onJump(key: string): void;
 }) {
+  const { t } = useI18n(messages);
   return (
-    <nav aria-label="目录" className="wr:flex wr:flex-col wr:gap-px">
+    <nav aria-label={t("notes.toc")} className="wr:flex wr:flex-col wr:gap-px">
       <p className="wr:text-tau-sm wr:text-ink-3 wr:flex wr:justify-between wr:px-2.5 wr:pb-1.5">
-        <span>目录</span>
-        <span className="wr:tabular-nums">{chapters.length} 章</span>
+        <span>{t("notes.toc")}</span>
+        <span className="wr:tabular-nums">{t("notes.chapterCount", { count: chapters.length })}</span>
       </p>
       {chapters.map(ch => (
         <button

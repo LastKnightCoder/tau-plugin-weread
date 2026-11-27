@@ -15,8 +15,9 @@ import {
   RefreshCw,
   SquareArrowOutUpRight,
 } from "lucide-react";
-import type { PluginPageContext } from "@tau/plugins";
+import { useI18n, type PluginPageContext } from "@tau/plugins";
 import { Button, Loading, cn, toast } from "@tau/ui";
+import { messages } from "../../i18n";
 import { HIGHLIGHT_COLORS, type BookNote, type NoteChapter } from "../../model";
 import { openExternal } from "../../hooks";
 import { BookInfo, BookReviews, ChapterSection, noteText } from "../NoteParts";
@@ -24,12 +25,13 @@ import { HIGHLIGHT_DOT, SERIF } from "../styles";
 import { useBookPage } from "../useBookPage";
 import { Pill } from "./parts";
 import { Sheet, SheetHost, SheetRow } from "./Sheet";
+import type { Translate } from "../../model";
 
 const ICON = { size: 19, strokeWidth: 1.75 } as const;
 
-async function copy(text: string) {
+async function copy(text: string, t: Translate) {
   await navigator.clipboard.writeText(text);
-  toast.success("已复制");
+  toast.success(t("notes.copied"));
 }
 
 export function MobileBook({
@@ -43,6 +45,7 @@ export function MobileBook({
   bookmarkRequest?: string;
   pageContext: PluginPageContext;
 }) {
+  const { t } = useI18n(messages);
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const page = useBookPage({
@@ -62,17 +65,15 @@ export function MobileBook({
   if (!page.detail || !book || !notes) {
     return (
       <div className="wr:flex wr:min-h-full wr:flex-col wr:items-center wr:justify-center wr:gap-2 wr:px-8 wr:text-center">
-        <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">书架上找不到这本书</p>
-        <p className="wr:text-tau-meta wr:text-ink-2">
-          可能已从微信读书书架移除，或属于另一个工作区。
-        </p>
+        <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">{t("notes.notFound")}</p>
+        <p className="wr:text-tau-meta wr:text-ink-2">{t("notes.notFoundHint")}</p>
         <Button
           variant="secondary"
           size="sm"
           className="wr:mt-2"
           onClick={() => void page.pages.shelf.open()}
         >
-          回到书架
+          {t("notes.backToShelf")}
         </Button>
       </div>
     );
@@ -96,7 +97,7 @@ export function MobileBook({
                 className="wr:flex-1"
                 onClick={openWeb}
               >
-                在微信读书中打开
+                {t("notes.openInWeRead")}
               </Button>
             )}
             <Button
@@ -105,16 +106,16 @@ export function MobileBook({
               icon={RefreshCw}
               className={openWeb ? undefined : "wr:flex-1"}
               loading={refreshing}
-              loadingText="拉取中…"
+              loadingText={t("notes.fetching")}
               disabled={!connected}
               onClick={page.refresh}
             >
-              重新拉取
+              {t("notes.refreshShort")}
             </Button>
             <Button
               variant="secondary"
               size="sm"
-              aria-label="更多"
+              aria-label={t("common.more")}
               onClick={() => setMoreOpen(true)}
             >
               <Ellipsis className="wr:size-[17px]" strokeWidth={1.75} />
@@ -128,12 +129,10 @@ export function MobileBook({
           <div className="wr:flex wr:flex-col wr:items-center wr:gap-2 wr:px-8 wr:py-16 wr:text-center">
             <Highlighter className="wr:text-ink-3 wr:size-7" strokeWidth={1.5} />
             <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">
-              {refreshing ? "正在拉取笔记…" : "这本书还没有划线"}
+              {refreshing ? t("notes.empty.fetching") : t("notes.empty.title")}
             </p>
             {!refreshing && (
-              <p className="wr:text-tau-meta wr:text-ink-2">
-                在微信读书里划线或写想法后，回到这里点「重新拉取」。
-              </p>
+              <p className="wr:text-tau-meta wr:text-ink-2">{t("notes.empty.hintMobile")}</p>
             )}
           </div>
         ) : (
@@ -142,11 +141,11 @@ export function MobileBook({
               ref={barRef}
               className="wr:bg-page wr:sticky wr:top-0 wr:z-[2] wr:mt-3 wr:flex wr:items-center wr:gap-1.5 wr:py-2 wr:pl-[18px] wr:pr-2.5"
             >
-              <Pill active={filter === "all"} onClick={() => setFilter("all")} label="全部" />
+              <Pill active={filter === "all"} onClick={() => setFilter("all")} label={t("filter.all")} />
               <Pill
                 active={filter === "review"}
                 onClick={() => setFilter(filter === "review" ? "all" : "review")}
-                label="有想法"
+                label={t("notes.filter.review")}
               />
               {colors.length > 1 &&
                 HIGHLIGHT_COLORS.filter(c => colors.includes(c.value)).map(c => (
@@ -154,7 +153,7 @@ export function MobileBook({
                     key={c.value}
                     type="button"
                     aria-pressed={filter === c.value}
-                    aria-label={`${c.label}色划线`}
+                    aria-label={t("notes.colorHighlight", { color: t(c.key) })}
                     onClick={() => setFilter(filter === c.value ? "all" : c.value)}
                     className={cn(
                       "wr:grid wr:size-[26px] wr:shrink-0 wr:place-items-center wr:rounded-full",
@@ -171,7 +170,7 @@ export function MobileBook({
                   className="wr:text-ink-2 wr:active:bg-press wr:ml-auto wr:flex wr:h-[30px] wr:min-w-0 wr:max-w-[128px] wr:items-center wr:gap-1 wr:rounded-[10px] wr:px-2 wr:text-[12.5px]"
                 >
                   <ListTree className="wr:size-4 wr:shrink-0" strokeWidth={1.75} />
-                  <span className="wr:truncate">{activeTitle ?? "目录"}</span>
+                  <span className="wr:truncate">{activeTitle ?? t("notes.toc")}</span>
                 </button>
               )}
             </div>
@@ -199,7 +198,7 @@ export function MobileBook({
         {page.copyMarkdown && (
           <SheetRow
             icon={<Copy {...ICON} />}
-            label="复制全书笔记为 Markdown"
+            label={t("notes.copyAllMarkdown")}
             onClick={() => {
               setMoreOpen(false);
               page.copyMarkdown?.();
@@ -208,7 +207,7 @@ export function MobileBook({
         )}
         <SheetRow
           icon={<RefreshCw {...ICON} />}
-          label="重新拉取笔记"
+          label={t("notes.refresh")}
           disabled={!connected || refreshing}
           onClick={() => {
             setMoreOpen(false);
@@ -218,7 +217,7 @@ export function MobileBook({
         {openWeb && (
           <SheetRow
             icon={<SquareArrowOutUpRight {...ICON} />}
-            label="在微信读书中打开"
+            label={t("notes.openInWeRead")}
             onClick={() => {
               setMoreOpen(false);
               openWeb();
@@ -257,6 +256,7 @@ function NoteSheet({
   onClose(): void;
   onToCard(note: BookNote): void;
 }) {
+  const { t } = useI18n(messages);
   // 退场动画期间保留内容
   const last = useRef(note);
   if (note) last.current = note;
@@ -282,18 +282,19 @@ function NoteSheet({
           {shown.paragraphs.length > 0 && (
             <SheetRow
               icon={<Layers {...ICON} />}
-              label="转为卡片"
+              label={t("notes.toCard")}
               onClick={() => run(() => onToCard(shown))}
             />
           )}
           <SheetRow
             icon={<Copy {...ICON} />}
-            label={shown.paragraphs.length ? "复制划线" : "复制想法"}
+            label={shown.paragraphs.length ? t("notes.copyHighlight") : t("notes.copyReview")}
             onClick={() =>
               run(
                 () =>
                   void copy(
-                    shown.paragraphs.length ? noteText(shown, false) : shown.review.join("\n")
+                    shown.paragraphs.length ? noteText(shown, false) : shown.review.join("\n"),
+                    t
                   )
               )
             }
@@ -301,8 +302,8 @@ function NoteSheet({
           {shown.paragraphs.length > 0 && shown.review.length > 0 && (
             <SheetRow
               icon={<MessageSquareQuote {...ICON} />}
-              label="复制划线和想法"
-              onClick={() => run(() => void copy(noteText(shown)))}
+              label={t("notes.copyBoth")}
+              onClick={() => run(() => void copy(noteText(shown), t))}
             />
           )}
         </>
@@ -325,12 +326,13 @@ function TocSheet({
   onClose(): void;
   onJump(key: string): void;
 }) {
+  const { t } = useI18n(messages);
   const activeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (open) requestAnimationFrame(() => activeRef.current?.scrollIntoView({ block: "center" }));
   }, [open]);
   return (
-    <Sheet open={open} onClose={onClose} title="目录" subtitle={`${chapters.length} 章`}>
+    <Sheet open={open} onClose={onClose} title={t("notes.toc")} subtitle={t("notes.chapterCount", { count: chapters.length })}>
       {chapters.map((ch, i) => (
         <button
           key={ch.key}

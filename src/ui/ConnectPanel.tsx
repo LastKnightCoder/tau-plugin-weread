@@ -5,13 +5,16 @@
 
 import { useState } from "react";
 import { BookOpen, ExternalLink, KeyRound } from "lucide-react";
+import { useI18n } from "@tau/plugins";
 import { Button, Input } from "@tau/ui";
+import { messages } from "../i18n";
 import { openExternal, useWeRead, useWeReadState } from "../hooks";
 
 export const WEREAD_API_KEY_URL = "https://weread.qq.com/r/weread-skills";
 
 export function ConnectPanel({ onConnected }: { onConnected(): void }) {
   const { runtime } = useWeRead();
+  const { t } = useI18n(messages);
   const reason = useWeReadState(state => state.connectionError);
   const [apiKey, setApiKey] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,12 +27,12 @@ export function ConnectPanel({ onConnected }: { onConnected(): void }) {
     setError("");
     try {
       if (!(await runtime.saveApiKey(value))) {
-        setError(runtime.getState().connectionError || "API Key 校验失败");
+        setError(runtime.getState().connectionError || t("settings.validateFailed"));
         return;
       }
       onConnected();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "API Key 校验失败");
+      setError(err instanceof Error ? err.message : t("settings.validateFailed"));
     } finally {
       setLoading(false);
     }
@@ -40,26 +43,26 @@ export function ConnectPanel({ onConnected }: { onConnected(): void }) {
       <span className="wr:bg-accent-soft wr:text-accent-text wr:mb-3.5 wr:grid wr:size-[52px] wr:place-items-center wr:rounded-[16px]">
         <BookOpen className="wr:size-6" strokeWidth={1.5} />
       </span>
-      <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">把微信读书的书架和笔记带进来</p>
+      <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">{t("connect.title")}</p>
       <p className="wr:text-tau-meta wr:text-ink-2 wr:mt-1.5 wr:max-w-[42ch]">
-        连接后同步书架，打开一本书时再拉取它的划线、想法和章节。数据只存在当前工作区。
+        {t("connect.description")}
       </p>
       <ol className="wr:text-tau-meta wr:text-ink-2 wr:mt-5 wr:flex wr:flex-col wr:gap-2 wr:text-left">
         <li className="wr:flex wr:items-center wr:gap-2.5">
           <Step n={1} />
-          在微信读书「AI 技能」页获取 API Key
+          {t("connect.step1")}
           <button
             type="button"
             onClick={() => openExternal(WEREAD_API_KEY_URL)}
             className="wr:text-accent-text wr:inline-flex wr:items-center wr:gap-1 wr:font-medium wr:hover:underline"
           >
-            打开获取页
+            {t("connect.step1Open")}
             <ExternalLink className="wr:size-3" strokeWidth={1.75} />
           </button>
         </li>
         <li className="wr:flex wr:items-center wr:gap-2.5">
           <Step n={2} />
-          粘贴到下方，校验通过后自动开始首次同步
+          {t("connect.step2")}
         </li>
       </ol>
       <form
@@ -76,18 +79,18 @@ export function ConnectPanel({ onConnected }: { onConnected(): void }) {
           value={apiKey}
           disabled={loading}
           onChange={e => setApiKey(e.target.value)}
-          placeholder="粘贴 API Key"
-          aria-label="微信读书 API Key"
+          placeholder={t("connect.placeholder")}
+          aria-label={t("connect.ariaKey")}
         />
         <Button
           type="submit"
           variant="primary"
           loading={loading}
-          loadingText="校验中…"
+          loadingText={t("connect.validating")}
           disabled={!apiKey.trim()}
           className="wr:shrink-0"
         >
-          保存并同步
+          {t("connect.saveAndSync")}
         </Button>
       </form>
       {(error || reason) && (

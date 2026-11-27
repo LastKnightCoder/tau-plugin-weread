@@ -16,7 +16,9 @@ import {
   Search,
   SearchX,
 } from "lucide-react";
+import { useI18n } from "@tau/plugins";
 import { Button, FadeScroll, FilterPill, Input, Loading, Menu, cn } from "@tau/ui";
+import { messages } from "../i18n";
 import {
   SHELF_SORTS,
   STATUS_FILTERS,
@@ -31,12 +33,13 @@ import { ConnectPanel } from "./ConnectPanel";
 import { CoverTile, ReadingCard, ShelfList } from "./ShelfItems";
 import { useShelf } from "./useShelf";
 
-const LAYOUTS: { value: ShelfLayout; label: string; icon: typeof LayoutGrid }[] = [
-  { value: "cover", label: "封面", icon: LayoutGrid },
-  { value: "list", label: "列表", icon: List },
+const LAYOUTS: { value: ShelfLayout; key: "layout.cover" | "layout.list"; icon: typeof LayoutGrid }[] = [
+  { value: "cover", key: "layout.cover", icon: LayoutGrid },
+  { value: "list", key: "layout.list", icon: List },
 ];
 
 export function WeReadView({ onSettings }: { onSettings(): void }) {
+  const { t } = useI18n(messages);
   const {
     connection,
     books,
@@ -78,7 +81,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
         className="wr:shrink-0"
         onClick={toSettings}
       >
-        连接微信读书
+        {t("shelf.connect")}
       </Button>
     ) : (
       <span className="wr:flex wr:shrink-0 wr:items-center">
@@ -89,13 +92,15 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
           className="wr:rounded-r-none wr:tabular-nums"
           loading={syncing}
           loadingText={
-            progress?.total ? `同步中 ${progress.completed}/${progress.total}` : "同步中…"
+            progress?.total
+              ? t("shelf.syncingProgress", { completed: progress.completed, total: progress.total })
+              : t("shelf.syncing")
           }
           disabled={connection !== "valid"}
-          title="只更新新书和最近读过、记过笔记的书"
+          title={t("shelf.syncFullHint")}
           onClick={() => sync()}
         >
-          同步
+          {t("shelf.sync")}
         </Button>
         <Menu
           align="end"
@@ -103,7 +108,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
             <Button
               variant="secondary"
               size="sm"
-              aria-label="更多同步选项"
+              aria-label={t("shelf.syncMore")}
               disabled={connection !== "valid" || syncing}
               className="wr:-ml-px wr:rounded-l-none wr:px-1.5"
             >
@@ -115,9 +120,9 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
             icon={<RefreshCw className="wr:size-[15px]" strokeWidth={1.75} />}
             onSelect={() => sync(true)}
           >
-            全量重新同步
+            {t("shelf.syncFull")}
             <span className="wr:text-ink-3 wr:ml-1.5 wr:tabular-nums">
-              约 {books.length * 2} 个请求
+              {t("shelf.requests", { count: books.length * 2 })}
             </span>
           </Menu.Item>
         </Menu>
@@ -131,22 +136,24 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
         <div className="wr:flex wr:flex-none wr:flex-col wr:px-8 wr:pt-5">
           <div className="wr:flex wr:h-10 wr:flex-none wr:items-center wr:gap-3">
             <h1 className="wr:text-tau-title-lg wr:shrink-0 wr:font-semibold wr:tracking-[-0.01em]">
-              微信读书
+              {t("page.title")}
             </h1>
             <span className="wr:text-tau-meta wr:text-ink-2 wr:w-0 wr:flex-1 wr:truncate wr:whitespace-nowrap wr:tabular-nums">
               {books.length > 0 && (
                 <>
-                  <b className="wr:text-ink-1 wr:font-semibold">{books.length}</b> 本书
+                  <b className="wr:text-ink-1 wr:font-semibold">{books.length}</b>{" "}
+                  {t("shelf.countSuffix", { count: books.length })}
                   {totalMinutes > 0 && (
                     <>
-                      <span className="wr:text-ink-3 wr:mx-1.5">·</span>累计阅读{" "}
+                      <span className="wr:text-ink-3 wr:mx-1.5">·</span>
+                      {t("shelf.totalReading")}{" "}
                       <b className="wr:text-ink-1 wr:font-semibold">
-                        {formatMinutes(totalMinutes)}
+                        {formatMinutes(totalMinutes, t)}
                       </b>
                     </>
                   )}
                   <span className="wr:text-ink-3 wr:mx-1.5">·</span>
-                  <span className="wr:text-ink-3">{formatSyncedAt(lastSyncedAt)}</span>
+                  <span className="wr:text-ink-3">{formatSyncedAt(lastSyncedAt, t)}</span>
                 </>
               )}
             </span>
@@ -163,7 +170,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                     setQuery("");
                   }
                 }}
-                placeholder="搜索书名或作者"
+                placeholder={t("shelf.searchPlaceholder")}
                 className="wr:w-0"
                 wrapperClassName="wr:w-auto wr:max-w-[240px] wr:flex-[0_1_240px]"
               />
@@ -175,16 +182,14 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
             <div className="wr:bg-warn-soft wr:text-tau-meta wr:mt-2 wr:flex wr:flex-none wr:items-center wr:gap-2.5 wr:rounded-[12px] wr:px-3 wr:py-2">
               <KeyRound className="wr:text-warn wr:size-4 wr:shrink-0" strokeWidth={1.75} />
               <span className="wr:min-w-0 wr:flex-1">
-                {connection === "invalid"
-                  ? "API Key 已失效，当前显示的是上次同步的本地缓存，不能拉取新笔记。"
-                  : "尚未连接微信读书，当前显示的是本地缓存。"}
+                {connection === "invalid" ? t("shelf.invalidCache") : t("shelf.noneCache")}
               </span>
               <button
                 type="button"
                 onClick={toSettings}
                 className="wr:text-accent-text wr:shrink-0 wr:font-medium wr:hover:underline"
               >
-                {connection === "invalid" ? "重新填写" : "去连接"}
+                {connection === "invalid" ? t("shelf.refill") : t("shelf.goConnect")}
               </button>
             </div>
           )}
@@ -196,7 +201,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                 <FilterPill
                   active={!activeArchive}
                   onClick={() => setArchive("")}
-                  label="全部"
+                  label={t("filter.all")}
                   count={books.length}
                 />
                 {archives.map(a => (
@@ -229,7 +234,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                 >
                   {STATUS_FILTERS.map(f => (
                     <Menu.RadioItem key={f.value} value={f.value}>
-                      {f.label}
+                      {t(f.key)}
                     </Menu.RadioItem>
                   ))}
                 </Menu.RadioGroup>
@@ -246,7 +251,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                 <Menu.RadioGroup value={sort} onValueChange={v => setSort(v as ShelfSort)}>
                   {SHELF_SORTS.map(s => (
                     <Menu.RadioItem key={s.value} value={s.value}>
-                      {s.label}
+                      {t(s.key)}
                     </Menu.RadioItem>
                   ))}
                 </Menu.RadioGroup>
@@ -260,7 +265,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                     icon={layout === "list" ? List : LayoutGrid}
                     className="wr:shrink-0"
                   >
-                    {LAYOUTS.find(l => l.value === layout)?.label}
+                    {LAYOUTS.find(l => l.value === layout)?.key && t(LAYOUTS.find(l => l.value === layout)!.key)}
                     <ChevronDown className="wr:text-ink-3 wr:size-3.5" strokeWidth={1.75} />
                   </Button>
                 }
@@ -271,7 +276,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
                 >
                   {LAYOUTS.map(l => (
                     <Menu.RadioItem key={l.value} value={l.value}>
-                      {l.label}
+                      {t(l.key)}
                     </Menu.RadioItem>
                   ))}
                 </Menu.RadioGroup>
@@ -294,7 +299,7 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
             <>
               {!filtering && reading.length > 0 && (
                 <section className="wr:mb-6">
-                  <SectionTitle title="在读" hint="最近读过的书" />
+                  <SectionTitle title={t("section.reading")} hint={t("section.readingHint")} />
                   <div className="wr:-mx-3.5 wr:grid wr:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] wr:gap-1">
                     {reading.map(book => (
                       <ReadingCard key={book.id} book={book} onOpen={() => open(book)} />
@@ -304,20 +309,20 @@ export function WeReadView({ onSettings }: { onSettings(): void }) {
               )}
               <section>
                 <SectionTitle
-                  title={status === "all" ? "全部" : statusLabel}
-                  hint={`${visible.length} 本 · 按${sortLabel}`}
+                  title={status === "all" ? t("section.all") : statusLabel}
+                  hint={t("section.countHint", { count: visible.length, sort: sortLabel })}
                 />
                 {visible.length === 0 ? (
                   <div className="wr:flex wr:flex-col wr:items-center wr:gap-2 wr:py-16 wr:text-center">
                     <SearchX className="wr:text-ink-3 wr:size-6" strokeWidth={1.5} />
-                    <p className="wr:text-tau-meta wr:text-ink-2">没有符合条件的书</p>
+                    <p className="wr:text-tau-meta wr:text-ink-2">{t("shelf.noMatch")}</p>
                     <Button
                       variant="secondary"
                       size="sm"
                       className="wr:mt-1"
                       onClick={clearFilters}
                     >
-                      清除筛选
+                      {t("shelf.clearFilters")}
                     </Button>
                   </div>
                 ) : layout === "list" ? (
@@ -366,18 +371,19 @@ export function EmptyShelf({
   onSync(): void;
   onSettings(): void;
 }) {
+  const { t } = useI18n(messages);
   if (connection === "none") return <ConnectPanel onConnected={onConnected} />;
   if (syncing)
     return (
       <Loading
         label={
           progress?.total
-            ? `正在同步书架 ${progress.completed} / ${progress.total}`
-            : "正在同步书架…"
+            ? t("shelf.syncingShelfProgress", { completed: progress.completed, total: progress.total })
+            : t("shelf.syncingShelf")
         }
       />
     );
-  if (connection === "checking") return <Loading label="正在校验 API Key…" />;
+  if (connection === "checking") return <Loading label={t("shelf.checkingKey")} />;
   const invalid = connection === "invalid";
   return (
     <div className="wr:flex wr:flex-col wr:items-center wr:gap-2 wr:px-5 wr:py-20 wr:text-center">
@@ -385,19 +391,19 @@ export function EmptyShelf({
         <BookOpen className="wr:size-6" strokeWidth={1.5} />
       </span>
       <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">
-        {invalid ? "API Key 已失效" : "书架还是空的"}
+        {invalid ? t("shelf.empty.invalid") : t("shelf.empty.title")}
       </p>
       <p className="wr:text-tau-meta wr:text-ink-2 wr:max-w-[36ch]">
-        {invalid ? "重新填写 API Key 后即可同步书架。" : "同步一次，把微信读书书架上的书带进来。"}
+        {invalid ? t("shelf.empty.invalidHint") : t("shelf.empty.hint")}
       </p>
       <div className="wr:mt-2.5">
         {invalid ? (
           <Button variant="soft" size="sm" icon={KeyRound} onClick={onSettings}>
-            重新填写
+            {t("shelf.refill")}
           </Button>
         ) : (
           <Button variant="soft" size="sm" icon={RefreshCw} onClick={onSync}>
-            同步书架
+            {t("shelf.empty.sync")}
           </Button>
         )}
       </div>

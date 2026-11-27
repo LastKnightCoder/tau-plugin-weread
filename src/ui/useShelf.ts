@@ -1,15 +1,17 @@
 /** 书架页的状态与派生数据：桌面与手机共用，只是排布不同 */
 
 import { useMemo, useState } from "react";
+import { useI18n } from "@tau/plugins";
 import { toast } from "@tau/ui";
+import { messages } from "../i18n";
 import {
-  SHELF_SORTS,
-  STATUS_FILTERS,
+  filterLabel,
   matchQuery,
   matchStatus,
   rankArchives,
   readingNow,
   sortBooks,
+  sortLabel as sortLabelText,
   toBook,
   type ShelfLayout,
   type ShelfSort,
@@ -21,20 +23,22 @@ import type { WeReadRuntime } from "../runtime";
 
 /** 同步并提示结果；书架与设置页共用 */
 export function syncWithToast(runtime: WeReadRuntime, full = false) {
+  const t = runtime.context.i18n.t;
   void runtime.sync({ full }).then(
     outcome => {
       if (!outcome) return;
       toast.success(
-        `同步完成，共 ${outcome.total} 本书，更新 ${outcome.updated} 本` +
-          (outcome.failed ? `，${outcome.failed} 本下次重试` : "")
+        t("sync.doneUpdated", { total: outcome.total, updated: outcome.updated }) +
+          (outcome.failed ? t("sync.retrySuffix", { count: outcome.failed }) : "")
       );
     },
-    error => toast.error(error instanceof Error ? error.message : "同步失败，请稍后再试")
+    error => toast.error(error instanceof Error ? error.message : t("sync.failed"))
   );
 }
 
 export function useShelf() {
   const { runtime, pages } = useWeRead();
+  const { t } = useI18n(messages);
   const connection = useWeReadState(state => state.connection);
   const metas = useWeReadState(state => state.books);
   const lastSyncedAt = useWeReadState(state => state.lastSyncedAt);
@@ -98,8 +102,8 @@ export function useShelf() {
     reading,
     totalMinutes,
     filtering: status !== "all" || query.trim().length > 0,
-    statusLabel: STATUS_FILTERS.find(f => f.value === status)?.label ?? "",
-    sortLabel: SHELF_SORTS.find(s => s.value === sort)?.label ?? "",
+    statusLabel: filterLabel(t, status),
+    sortLabel: sortLabelText(t, sort),
     open: (book: WeReadBook) => void pages.book.open({ bookId: book.id }),
     setSort: (value: ShelfSort) => runtime.setPrefs({ sort: value }),
     setLayout: (value: ShelfLayout) => runtime.setPrefs({ layout: value }),

@@ -6,7 +6,9 @@
 
 import { useState } from "react";
 import { ArrowLeft, Highlighter, PanelLeft } from "lucide-react";
+import { useI18n } from "@tau/plugins";
 import { Button, FadeScroll, IconButton, Loading, Tooltip, cn } from "@tau/ui";
+import { messages } from "../i18n";
 import { openExternal, useWeRead, useWeReadState } from "../hooks";
 import { BookHeader, BookReviews, ChapterSection, NoteFilterBar, NoteToc } from "./NoteParts";
 import { useBookPage } from "./useBookPage";
@@ -20,6 +22,7 @@ export function WeReadBookView({
   bookmark?: string;
   bookmarkRequest?: string;
 }) {
+  const { t } = useI18n(messages);
   const { runtime } = useWeRead();
   const tocOpen = useWeReadState(state => state.prefs.tocOpen);
   const toggleToc = () => runtime.setPrefs({ tocOpen: !tocOpen });
@@ -58,17 +61,15 @@ export function WeReadBookView({
   if (!detail || !book || !notes) {
     return (
       <div className="wr:flex wr:h-full wr:flex-col wr:items-center wr:justify-center wr:gap-2 wr:text-center">
-        <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">书架上找不到这本书</p>
-        <p className="wr:text-tau-meta wr:text-ink-2">
-          可能已从微信读书书架移除，或属于另一个工作区。
-        </p>
+        <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">{t("notes.notFound")}</p>
+        <p className="wr:text-tau-meta wr:text-ink-2">{t("notes.notFoundHint")}</p>
         <Button
           variant="secondary"
           size="sm"
           className="wr:mt-2"
           onClick={() => void pages.shelf.open()}
         >
-          回到书架
+          {t("notes.backToShelf")}
         </Button>
       </div>
     );
@@ -92,10 +93,10 @@ export function WeReadBookView({
         </div>
         <div className="wr:flex wr:min-w-0 wr:flex-1 wr:flex-col">
           <div className="wr:flex wr:flex-none wr:items-center wr:gap-1 wr:px-3 wr:pt-3">
-            <Tooltip content={tocOpen ? "收起目录" : "展开目录"} placement="bottom">
+            <Tooltip content={tocOpen ? t("notes.tocCollapse") : t("notes.tocExpand")} placement="bottom">
               <IconButton
                 onClick={toggleToc}
-                aria-label={tocOpen ? "收起目录" : "展开目录"}
+                aria-label={tocOpen ? t("notes.tocCollapse") : t("notes.tocExpand")}
                 aria-expanded={tocOpen}
                 disabled={chapters.length <= 1}
               >
@@ -108,7 +109,7 @@ export function WeReadBookView({
               icon={ArrowLeft}
               onClick={() => void pages.shelf.open()}
             >
-              书架
+              {t("notes.backToShelfShort")}
             </Button>
           </div>
           <FadeScroll scrollRef={setScrollEl} className="wr:mb-4 wr:min-h-0 wr:min-w-0 wr:flex-1">
@@ -128,11 +129,11 @@ export function WeReadBookView({
                 <div className="wr:flex wr:flex-col wr:items-center wr:gap-2 wr:py-20 wr:text-center">
                   <Highlighter className="wr:text-ink-3 wr:size-7" strokeWidth={1.5} />
                   <p className="wr:text-ink-1 wr:text-[15px] wr:font-semibold">
-                    {refreshing ? "正在拉取笔记…" : "这本书还没有划线"}
+                    {refreshing ? t("notes.empty.fetching") : t("notes.empty.title")}
                   </p>
                   {!refreshing && (
                     <p className="wr:text-tau-meta wr:text-ink-2 wr:max-w-[36ch]">
-                      在微信读书里划线或写想法后，回到这里点「重新拉取笔记」。
+                      {t("notes.empty.hint")}
                     </p>
                   )}
                 </div>
