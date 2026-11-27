@@ -8,8 +8,20 @@ import { compile } from "@tailwindcss/node";
 import { Scanner } from "@tailwindcss/oxide";
 import AdmZip from "adm-zip";
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+
+const LOCALIZED_README_PATTERN = /^README\.([A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*)\.md$/;
+
+function parseLocalizedReadmeFilename(fileName) {
+  const match = LOCALIZED_README_PATTERN.exec(fileName);
+  if (!match || match[1].length > 35) return null;
+  try {
+    return new Intl.Locale(match[1]).toString();
+  } catch {
+    return null;
+  }
+}
 
 const SHARED = [...PORTABLE_SHARED_MODULES];
 
@@ -49,6 +61,19 @@ try {
   const readme = await readFile("README.md", "utf8");
   if (!readme.trim()) throw new Error("README.md 不能为空");
   await writeFile(path.join(staging, "README.md"), readme);
+  const localizedReadmes = new Map();
+  for (const entry of await readdir(".", { withFileTypes: true })) {
+    const locale = parseLocalizedReadmeFilename(entry.name);
+    if (!locale) continue;
+    if ((await lstat(entry.name)).isSymbolicLink() || !entry.isFile())
+      throw new Error(`多语言说明必须是普通文件：${entry.name}`);
+    if (localizedReadmes.has(locale))
+      throw new Error(`多语言说明存在重复语言：${entry.name}`);
+    const content = await readFile(entry.name, "utf8");
+    if (!content.trim()) throw new Error(`${entry.name} 不能为空`);
+    localizedReadmes.set(locale, entry.name);
+    await writeFile(path.join(staging, `README.${locale}.md`), content);
+  }
   for (const name of ["LICENSE", "CHANGELOG.md"]) {
     try {
       await writeFile(path.join(staging, name), await readFile(name));
@@ -93,14 +118,19 @@ try {
     integrity[file] = createHash("sha256")
       .update(await readFile(path.join(staging, file)))
       .digest("hex");
-  await writeFile(
-    path.join(staging, "manifest.json"),
-    JSON.stringify(
-      buildPortablePluginManifest(manifest, { main: "main.js", styles: "main.css", integrity }),
-      null,
-      2
-    )
-  );
+  const basePackaged = buildPortablePluginManifest(manifest, {
+    main: "main.js",
+    styles: "main.css",
+    integrity,
+  });
+  const packaged = {
+    ...basePackaged,
+    ...(basePackaged.i18n === undefined && manifest.i18n ? { i18n: manifest.i18n } : {}),
+    ...(basePackaged.locales === undefined && manifest.locales
+      ? { locales: manifest.locales }
+      : {}),
+  };
+  await writeFile(path.join(staging, "manifest.json"), JSON.stringify(packaged, null, 2));
   const destination = path.resolve("dist", `${manifest.version}-${buildId}`);
   await rename(staging, destination);
   const zip = new AdmZip();
